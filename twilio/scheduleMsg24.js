@@ -1,5 +1,7 @@
 require('dotenv').config();
 const twilio = require("twilio");
+const cal = require('../cal/getBookingById');
+
 
 // Find your Account SID and Auth Token at twilio.com/console
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -12,18 +14,24 @@ if (!accountSid || !authToken) {
   process.exit(1);
 }
 
-async function createReminder(appointmentDate, testNumber, hoursBeforeAppointment) {
+async function createReminder(appointmentDate, number, hoursBeforeAppointment) {
   // Calculate reminder time as 24 hours before the appointment date
   const reminderDate = new Date(appointmentDate);
+
+  
+  // reminder needs to be updated here (incremented)
+
+
+
   reminderDate.setHours(reminderDate.getHours() - hoursBeforeAppointment);
 
   try {
     const message = await client.messages.create({
-      body: "This is a 24-hour reminder for your appointment.",
+      body: `This is a reminder for your appointment in ${hoursBeforeAppointment} hours.`,
       messagingServiceSid: msgServiceSid,
       scheduleType: "fixed",
       sendAt: reminderDate,
-      to: testNumber,
+      to: number,
     });
 
     console.log("Scheduled message:", message.body);
@@ -34,6 +42,14 @@ async function createReminder(appointmentDate, testNumber, hoursBeforeAppointmen
 
 // Example appointment date
 const appointmentDate = new Date("2024-11-14T20:36:27");
-const testNumber = "+61483963666"; 
+const number = "+61483963666"; 
 const hoursBeforeAppointment = 24;
-createMessage(appointmentDate, testNumber, hoursBeforeAppointment);
+
+createReminder(appointmentDate, testNumber, hoursBeforeAppointment);
+
+//we have to know which reminder to send (24, 12, 1)
+
+function whichReminder(bookingId){
+  const reminderStatus = cal.decideReminder(bookingId)
+
+}

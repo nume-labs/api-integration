@@ -4,17 +4,34 @@ require('dotenv').config();
 // Initialize the HubSpot client with your access token
 const hubspotClient = new hubspot.Client({ accessToken: process.env.HUBSPOT_ACCESS_TOKEN });
 
-async function createNote(noteData) {
-    // Define the properties for the note, including hs_timestamp
-    const properties = {
-        "hs_note_body": noteData.body || "No content provided",  // Default message if no body is provided
-        "hs_timestamp": new Date().toISOString()  // Set current timestamp in ISO format
+async function createNoteWithAssociation(noteData) {
+    // Define the properties for the note
+    const notePayload = {
+        properties: {
+            hs_note_body: noteData.body || "No content provided",
+            hs_timestamp: new Date(noteData.timestamp).toISOString()  // Set timestamp if provided
+        },
+        associations: [
+            {
+                to: {
+                    id: noteData.contactId  // Contact ID to associate the note with
+                },
+                types: [
+                    {
+                        associationCategory: "HUBSPOT_DEFINED",
+                        associationTypeId: 280  // Association type ID
+                    }
+                ]
+            }
+        ]
     };
 
     try {
-        // Create the note in HubSpot for the specified contact ID
-        const apiResponse = await hubspotClient.crm.objects.notes.basicApi.create({
-            properties
+        // Use HubSpot's API to create the note with association
+        const apiResponse = await hubspotClient.apiRequest({
+            method: 'POST',
+            path: '/crm/v3/objects/notes',
+            body: notePayload
         });
 
         // Log the response from HubSpot
@@ -28,10 +45,11 @@ async function createNote(noteData) {
     }
 }
 
-// Example usage of createNote function with dynamic input
+// Example usage of createNoteWithAssociation function with dynamic input
 const exampleNote = {
-    body: "This is a dynamically created note.",
-    contactId: "71196564006"  // Replace with actual contact ID
+    body: "This is a test note",
+    timestamp: "2019-10-30T03:30:17.883Z",
+    contactId: 71196564006  // Replace with the actual contact ID
 };
 
-createNote(exampleNote);
+createNoteWithAssociation(exampleNote);

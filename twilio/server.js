@@ -2,7 +2,8 @@
 const express = require('express');
 const { MessagingResponse } = require('twilio').twiml;
 const deleteBooking = require('../cal/deleteBooking');
-const scheduleMsg = require('../twilio/scheduleMsg24')
+const scheduleMsg = require('../twilio/scheduleMsg24');
+const createNote = require('../hubspot/createNote');
 const app = express();
 
 // Middleware to parse incoming Twilio messages
@@ -16,6 +17,10 @@ app.post('/sms', (req, res) => {
   const fromNumber = req.body.From; // Retrieve the sender's number
 
   console.log(`Received message from ${fromNumber}: ${incomingMessage}`);
+
+  //make a note of the message
+  createNote.createNoteWithAssociation(incomingMessage, fromNumber, 'message')
+
 
   // Example response based on the incoming message
   if (incomingMessage.toLowerCase().includes("hello")) {

@@ -33,6 +33,7 @@ async function listNotes() {
             console.log("Created At:", note.createdAt);
             console.log("Updated At:", note.updatedAt);
             console.log("Archived:", note.archived);
+            console.log("body: ", note.body);
             
             // Log each property of the note
             console.log("Properties:");
