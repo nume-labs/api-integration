@@ -1,7 +1,8 @@
 
 const express = require('express');
 const { MessagingResponse } = require('twilio').twiml;
-const calService = require('../cal/deleteBooking');
+const deleteBooking = require('../cal/deleteBooking');
+const scheduleMsg = require('../twilio/scheduleMsg24')
 const app = express();
 
 // Middleware to parse incoming Twilio messages
@@ -24,6 +25,7 @@ app.post('/sms', (req, res) => {
   }
 
   if (incomingMessage.toLowerCase().trim() === "cancel") {
+    deleteBooking.deleteBooking(fromNumber);
     twiml.message("Thank you, we will send you a cancel confirmation soon");
   } else {
     twiml.message("Please respond with either Cancel | Reschedule | Yes");
@@ -36,6 +38,7 @@ app.post('/sms', (req, res) => {
   }
 
   if (incomingMessage.toLowerCase().trim() === "yes") {
+    scheduleMsg.scheduleMsg(fromNumber)
     twiml.message("Thank you for confirming your appointment");
   } else {
     twiml.message("Please respond with either Cancel | Reschedule | Yes");
@@ -51,12 +54,3 @@ app.listen(3000, () => {
 });
 
 
-
-async function cancelAppointment(userId) {
-  try {
-    const response = await calService.deleteBooking(userId); // Await the cancelBooking call
-    console.log(`Cancellation response for user ID ${userId}:`, response);
-  } catch (error) {
-    console.error(`Error cancelling appointment for user ID ${userId}:`, error);
-  }
-}

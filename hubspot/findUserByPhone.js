@@ -4,11 +4,7 @@ require('dotenv').config();
 // Initialize the HubSpot client with your access token
 const hubspotClient = new hubspot.Client({ accessToken: process.env.HUBSPOT_ACCESS_TOKEN });
 
-/**
- * Function to retrieve all contacts from HubSpot and find a contact by phone number.
- * @param {string} phoneNumber - The phone number to search for.
- * @returns {Object|null} - The matched contact object or null if not found.
- */
+
 async function getContactByPhoneNumber(phoneNumber) {
     try {
         // Fetch all contacts from HubSpot
@@ -33,19 +29,14 @@ async function getContactByPhoneNumber(phoneNumber) {
     }
 }
 
-/**
- * Helper function to normalize phone numbers for comparison.
- * This removes spaces, dashes, and parentheses to ensure consistent comparison.
- * @param {string} phoneNumber - The phone number to normalize.
- * @returns {string} - The normalized phone number.
- */
+
 function normalizePhoneNumber(phoneNumber) {
     return phoneNumber.replace(/[-\s()]/g, '');  // Remove dashes, spaces, and parentheses
 }
 
 // Example usage of getContactByPhoneNumber function
 (async () => {
-    const phoneNumberToSearch = "36705543726";  // Replace with actual phone number
+    const phoneNumberToSearch = "1234567890";  // Replace with actual phone number
     const contact = await getContactByPhoneNumber(phoneNumberToSearch);
 
     if (contact) {
