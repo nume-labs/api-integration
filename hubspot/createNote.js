@@ -4,17 +4,17 @@ require('dotenv').config();
 // Initialize the HubSpot client with your access token
 const hubspotClient = new hubspot.Client({ accessToken: process.env.HUBSPOT_ACCESS_TOKEN });
 
-async function createNoteWithAssociation(noteData) {
+async function createNote(body, contactID) {
     // Define the properties for the note
     const notePayload = {
         properties: {
-            hs_note_body: noteData.body || "No content provided",
-            hs_timestamp: new Date(noteData.timestamp).toISOString()  // Set timestamp if provided
+            hs_note_body: body || "No content provided",
+            hs_timestamp: new Date().toISOString()  // Set timestamp to now
         },
         associations: [
             {
                 to: {
-                    id: noteData.contactId  // Contact ID to associate the note with
+                    id: contactID  // Contact ID to associate the note with
                 },
                 types: [
                     {
@@ -52,4 +52,4 @@ const exampleNote = {
     contactId: 71196564006  // Replace with the actual contact ID
 };
 
-createNoteWithAssociation(exampleNote);
+createNote(exampleNote.body, exampleNote.contactId);

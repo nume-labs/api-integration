@@ -4,6 +4,7 @@ const { MessagingResponse } = require('twilio').twiml;
 const deleteBooking = require('../cal/deleteBooking');
 const scheduleMsg = require('../twilio/scheduleMsg24');
 const createNote = require('../hubspot/createNote');
+const findUser = require('../hubspot/findUserByPhone');
 const app = express();
 
 // Middleware to parse incoming Twilio messages
@@ -19,7 +20,7 @@ app.post('/sms', (req, res) => {
   console.log(`Received message from ${fromNumber}: ${incomingMessage}`);
 
   //make a note of the message
-  createNote.createNoteWithAssociation(incomingMessage, fromNumber, 'message')
+  createNote.createNote(incomingMessage, fromNumber)
 
 
   // Example response based on the incoming message
@@ -30,7 +31,21 @@ app.post('/sms', (req, res) => {
   }
 
   if (incomingMessage.toLowerCase().trim() === "cancel") {
+
+    //delete the booking
     deleteBooking.deleteBooking(fromNumber);
+
+    //find userID via phoneNumber
+    findUser.getUserIdByPhone(phoneNumber)
+    .then(response => {
+      const userID = response.results?.[0]?.id;
+      console.log("This is the response: ", userID);
+    })
+    .catch(error => {
+      console.error("Error:", error);
+    });
+
+    createNote.createNote("Contact cancelled appointment: ", userID)
     twiml.message("Thank you, we will send you a cancel confirmation soon");
   } else {
     twiml.message("Please respond with either Cancel | Reschedule | Yes");
@@ -44,6 +59,18 @@ app.post('/sms', (req, res) => {
 
   if (incomingMessage.toLowerCase().trim() === "yes") {
     scheduleMsg.scheduleMsg(fromNumber)
+    //find userID via phoneNumber
+    findUser.getUserIdByPhone(phoneNumber)
+    .then(response => {
+      const userID = response.results?.[0]?.id;
+      console.log("This is the response: ", userID);
+    })
+    .catch(error => {
+      console.error("Error:", error);
+    });
+    //create the note
+    createNote.createNote("Contact confirmed appointment: ", userID)
+
     twiml.message("Thank you for confirming your appointment");
   } else {
     twiml.message("Please respond with either Cancel | Reschedule | Yes");
