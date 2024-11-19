@@ -54,6 +54,37 @@ async function sendScheduledMessage(body, sendAt, to) {
     }
 }
 
+// async function checkAndScheduleNextReminder(bookingId, phoneNumber) {
+//     try {
+//         const response = await getBooking(bookingId);
+        
+//         if (!response.booking || !response.booking.startTime) {
+//             throw new Error('Invalid response structure: startTime is missing.');
+//         }
+
+//         const startTime = new Date(response.booking.startTime);
+//         const nextReminder = calculateNextReminder(startTime);
+
+//         if (nextReminder !== null) {
+//             console.log(`Scheduling ${nextReminder}-hour reminder`);
+
+//             //calculate sendAt time.
+//             const sendAt = new Date(startTime.getTime() - nextReminder * 60 * 60 * 1000);
+
+//             //build message body
+//             const body = `Reminder: Your appointment is in ${nextReminder} hour${nextReminder > 1 ? 's' : ''}.`;
+        
+//             //send the message
+//             const response = await sendScheduledMessage(body, sendAt, phoneNumber);
+//             console.log(`response: ${JSON.stringify(response, null, 2)}`);
+//         } else {
+//             console.log("No reminder needed at this time");
+//         }
+//     } catch (error) {
+//         console.error('Error in checkAndScheduleNextReminder:', error);
+//     }
+// }
+
 async function checkAndScheduleNextReminder(bookingId, phoneNumber) {
     try {
         const response = await getBooking(bookingId);
@@ -74,9 +105,16 @@ async function checkAndScheduleNextReminder(bookingId, phoneNumber) {
             //build message body
             const body = `Reminder: Your appointment is in ${nextReminder} hour${nextReminder > 1 ? 's' : ''}.`;
         
-            //send the message
-            const response = await sendScheduledMessage(body, sendAt, phoneNumber);
-            console.log(`response: ${JSON.stringify(response, null, 2)}`);
+            // Check if a message with the same body is already scheduled
+            const isAlreadyScheduled = await checkExistingScheduledMessage(phoneNumber, body);
+            
+            if (isAlreadyScheduled) {
+                console.log("A message with the same content is already scheduled. Skipping scheduling.");
+            } else {
+                //send the message
+                const response = await sendScheduledMessage(body, sendAt, phoneNumber);
+                console.log(`response: ${JSON.stringify(response, null, 2)}`);
+            }
         } else {
             console.log("No reminder needed at this time");
         }
@@ -85,6 +123,10 @@ async function checkAndScheduleNextReminder(bookingId, phoneNumber) {
     }
 }
 
+async function checkExistingScheduledMessage(phoneNumber, body) {
+    const scheduledMessages = await listScheduledMessages(phoneNumber);
+    return scheduledMessages.some(message => message.body === body);
+}
 
 
 async function cancelMsg(sid) {
@@ -126,7 +168,7 @@ async function listScheduledMessages(phoneNumber) {
     }
 }
 
-listScheduledMessages("+61483963666")
+// listScheduledMessages("+61483963666")
 
 // Example usage
 // checkAndScheduleNextReminder(4390487, "+61483963666");
@@ -137,9 +179,3 @@ module.exports = {
     getBooking, 
     cancelMsg
 };
-
-// Reminder: Your appointment is in 24 hours. SM5fe5647e6b9092ca1f20f9fdbbb111ae
-// Reminder: Your appointment is in 24 hours. SM9b00569c47c0e33c0dd256e5b421ce43
-// Reminder: Your appointment is in 24 hours. SMd55a351fa1fdfda363c55f58d6040fe2
-// Reminder: Your appointment is in 24 hours. SM6ff635ce05b2d7ba93523cf673bff792
-// Reminder: Your appointment is in 24 hours. SM0495211f870b7d77d373f6277c9b51e8
