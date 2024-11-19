@@ -76,7 +76,7 @@ async function checkAndScheduleNextReminder(bookingId, phoneNumber) {
         
             //send the message
             const response = await sendScheduledMessage(body, sendAt, phoneNumber);
-            console.log(`response: ${response}`);
+            console.log(`response: ${JSON.stringify(response, null, 2)}`);
         } else {
             console.log("No reminder needed at this time");
         }
@@ -85,11 +85,61 @@ async function checkAndScheduleNextReminder(bookingId, phoneNumber) {
     }
 }
 
+
+
+async function cancelMsg(sid) {
+  const message = await client
+    .messages(sid)
+    .update({ status: "canceled" });
+
+  console.log(message.body);
+}
+
+
+
+async function listAllMessages(phoneNumber) {
+  const messages = await client.messages.list({
+    to: phoneNumber,
+    limit: 20,
+  });
+
+  messages.forEach((m) => console.log(m.body, m.sid, m.status));
+}
+
+async function listScheduledMessages(phoneNumber) {
+    try {
+        const allMessages = await client.messages.list({
+            to: phoneNumber,
+            limit: 20,
+        });
+
+        const scheduledMessages = allMessages.filter(message => message.status === 'scheduled');
+
+        // Log the scheduled messages for debugging
+        scheduledMessages.forEach(m => console.log(m.body, m.sid, m.status));
+        console.log(scheduledMessages);
+        // Return the list of scheduled messages
+        return scheduledMessages;
+    } catch (error) {
+        console.error('Error listing scheduled messages:', error);
+        throw error;
+    }
+}
+
+listScheduledMessages("+61483963666")
+
 // Example usage
 // checkAndScheduleNextReminder(4390487, "+61483963666");
 
 module.exports = {
     checkAndScheduleNextReminder,
     calculateNextReminder,
-    getBooking
+    getBooking, 
+    cancelMsg
 };
+
+// Reminder: Your appointment is in 24 hours. SM5fe5647e6b9092ca1f20f9fdbbb111ae
+// Reminder: Your appointment is in 24 hours. SM9b00569c47c0e33c0dd256e5b421ce43
+// Reminder: Your appointment is in 24 hours. SMd55a351fa1fdfda363c55f58d6040fe2
+// Reminder: Your appointment is in 24 hours. SM6ff635ce05b2d7ba93523cf673bff792
+// Reminder: Your appointment is in 24 hours. SM0495211f870b7d77d373f6277c9b51e8
