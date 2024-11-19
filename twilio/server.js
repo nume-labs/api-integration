@@ -13,9 +13,9 @@ app.use(express.urlencoded({ extended: true }));
 // OAuth 2.0 configuration
 const CLIENT_ID = process.env.HUBSPOT_CLIENT_ID;
 const CLIENT_SECRET = process.env.HUBSPOT_CLIENT_SECRET;
-const REDIRECT_URI = 'http://localhost:3000/oauth-callback';
+const REDIRECT_URI = 'http://localhost:3000/callback';
 const SCOPE = 'crm.objects.contacts.read crm.objects.contacts.write';
-const clientID = process.env.HUBSPOT_CLIENT_ID;
+
 
 
 let accessToken = null;
@@ -34,6 +34,8 @@ app.get('/callback', async (req, res) => {
     accessToken = tokenResponse.access_token;
     refreshToken = tokenResponse.refresh_token;
     res.send('Authentication successful! You can now use the HubSpot API.');
+    console.log("access token: ", accessToken);
+    console.log("refresh token: ", refreshToken)
   } catch (error) {
     console.error('Error during OAuth flow:', error);
     res.status(500).send('Authentication failed');
