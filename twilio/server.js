@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const { MessagingResponse } = require('twilio').twiml;
 const deleteBooking = require('../cal/deleteBooking');
-const scheduleMsg = require('../twilio/scheduleMsg24');
+const scheduleMsg = require('./msgScheduler');
 const createNote = require('../hubspot/createNote');
 const { getUserIdByPhone, getUserByPhone } = require('../hubspot/findUserByPhone');
 const axios = require('axios');
@@ -107,6 +107,7 @@ async function handleNoteCreation(message, phoneNumber) {
     
     // const response = await getUserIdByPhone(phoneNumber, hubspotClient);
     // const userID = response.results?.[0]?.id;
+    
     userID = 71196564006;
     if (userID) {
       await createNote(message, userID, hubspotClient);
