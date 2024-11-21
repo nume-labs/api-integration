@@ -33,15 +33,15 @@ async function getUserIdByPhone(phoneNumber, hubspotClient){
   }
 }
 
-// Example usage with .then()
-const phoneNumber = '36705543726';
-getUserByPhone(phoneNumber)
-  .then(response => {
-    console.log("This is the response: ", JSON.stringify(response, null, 2));
-  })
-  .catch(error => {
-    console.error("Error:", error);
-  });
+// // Example usage with .then()
+// const phoneNumber = '36705543726';
+// getUserByPhone(phoneNumber)
+//   .then(response => {
+//     console.log("This is the response: ", JSON.stringify(response, null, 2));
+//   })
+//   .catch(error => {
+//     console.error("Error:", error);
+//   });
 
 // getUserIdByPhone(phoneNumber)
 // .then(response => {

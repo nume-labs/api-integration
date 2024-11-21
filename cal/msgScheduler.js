@@ -54,41 +54,13 @@ async function sendScheduledMessage(body, sendAt, to) {
     }
 }
 
-// async function checkAndScheduleNextReminder(bookingId, phoneNumber) {
-//     try {
-//         const response = await getBooking(bookingId);
-        
-//         if (!response.booking || !response.booking.startTime) {
-//             throw new Error('Invalid response structure: startTime is missing.');
-//         }
-
-//         const startTime = new Date(response.booking.startTime);
-//         const nextReminder = calculateNextReminder(startTime);
-
-//         if (nextReminder !== null) {
-//             console.log(`Scheduling ${nextReminder}-hour reminder`);
-
-//             //calculate sendAt time.
-//             const sendAt = new Date(startTime.getTime() - nextReminder * 60 * 60 * 1000);
-
-//             //build message body
-//             const body = `Reminder: Your appointment is in ${nextReminder} hour${nextReminder > 1 ? 's' : ''}.`;
-        
-//             //send the message
-//             const response = await sendScheduledMessage(body, sendAt, phoneNumber);
-//             console.log(`response: ${JSON.stringify(response, null, 2)}`);
-//         } else {
-//             console.log("No reminder needed at this time");
-//         }
-//     } catch (error) {
-//         console.error('Error in checkAndScheduleNextReminder:', error);
-//     }
-// }
 
 async function checkAndScheduleNextReminder(bookingId, phoneNumber) {
     try {
+        //call the getbooking function
         const response = await getBooking(bookingId);
         
+        //error handling, if start time is elapsed or missing
         if (!response.booking || !response.booking.startTime) {
             throw new Error('Invalid response structure: startTime is missing.');
         }
@@ -108,6 +80,7 @@ async function checkAndScheduleNextReminder(bookingId, phoneNumber) {
             // Check if a message with the same body is already scheduled
             const isAlreadyScheduled = await checkExistingScheduledMessage(phoneNumber, body);
             
+            //check if message is already scheduled (rate limiter can also be applied under this block)
             if (isAlreadyScheduled) {
                 console.log("A message with the same content is already scheduled. Skipping scheduling.");
             } else {
@@ -124,7 +97,10 @@ async function checkAndScheduleNextReminder(bookingId, phoneNumber) {
 }
 
 async function checkExistingScheduledMessage(phoneNumber, body) {
+    //get a list of all scheduled messages to phoneNumber
     const scheduledMessages = await listScheduledMessages(phoneNumber);
+
+    //from scheduledMessages, check if the bodies match.
     return scheduledMessages.some(message => message.body === body);
 }
 
@@ -155,11 +131,13 @@ async function listScheduledMessages(phoneNumber) {
             limit: 20,
         });
 
+        //filter scheduled messages directed towards phoneNumber.
         const scheduledMessages = allMessages.filter(message => message.status === 'scheduled');
 
         // Log the scheduled messages for debugging
         scheduledMessages.forEach(m => console.log(m.body, m.sid, m.status));
         console.log(scheduledMessages);
+
         // Return the list of scheduled messages
         return scheduledMessages;
     } catch (error) {
