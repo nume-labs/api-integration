@@ -1,9 +1,8 @@
 const hubspot = require('@hubspot/api-client');
 require('dotenv').config();
-// Initialize the HubSpot client with your access token
-const hubspotClient = new hubspot.Client({ accessToken: process.env.HUBSPOT_ACCESS_TOKEN });
 
-async function getUserByPhone(phoneNumber) {
+async function getUserIdByPhone(phoneNumber) {
+  const hubspotClient = new hubspot.Client({ accessToken: process.env.HUBSPOT_ACCESS_TOKEN });
   const PublicObjectSearchRequest = { 
     query: phoneNumber,
     limit: 1,
@@ -11,46 +10,25 @@ async function getUserByPhone(phoneNumber) {
 
   try {
     const apiResponse = await hubspotClient.crm.contacts.searchApi.doSearch(PublicObjectSearchRequest);
-    return apiResponse;
+    if (apiResponse.results && apiResponse.results.length > 0) {
+      const userId = apiResponse.results[0].id;
+      console.log("User ID:", userId);
+      return userId;
+    } else {
+      console.log("No user found with this phone number");
+      return null;
+    }
   } catch (error) {
     console.error('Error fetching contact:', error.response ? error.response.body : error.message);
     throw error;
   }
 }
 
-async function getUserIdByPhone(phoneNumber, hubspotClient){
-  const PublicObjectSearchRequest = { 
-    query: phoneNumber,
-    limit: 1,
-  };
+// async function main() {
+//   const userId = await getUserIdByPhone("705543726");
+//   console.log("Returned User ID:", userId);
+// }
 
-  try {
-    const apiResponse = await hubspotClient.crm.contacts.searchApi.doSearch(PublicObjectSearchRequest);
-    return apiResponse;
-  } catch (error) {
-    console.error('Error fetching contact:', error.response ? error.response.body : error.message);
-    throw error;
-  }
-}
+// main();
 
-// // Example usage with .then()
-// const phoneNumber = '36705543726';
-// getUserByPhone(phoneNumber)
-//   .then(response => {
-//     console.log("This is the response: ", JSON.stringify(response, null, 2));
-//   })
-//   .catch(error => {
-//     console.error("Error:", error);
-//   });
-
-// getUserIdByPhone(phoneNumber)
-// .then(response => {
-//   const userID = response.results?.[0]?.id;
-//   console.log("This is the response: ", userID);
-// })
-// .catch(error => {
-//   console.error("Error:", error);
-// });
-
-
-module.exports = {getUserIdByPhone, getUserByPhone}
+module.exports = { getUserIdByPhone };

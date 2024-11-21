@@ -3,6 +3,9 @@ const { response } = require('express');
 const fetch = require('node-fetch');
 const twilio = require('twilio');
 
+const {getContactLeadStatus} = require('../hubspot/updateLead')
+const {getUserIdByPhone} = require('../hubspot/findUserByPhone')
+
 const API_KEY = process.env.CAL_API_KEY;
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
@@ -58,7 +61,19 @@ async function sendScheduledMessage(body, sendAt, to) {
 async function checkAndScheduleNextReminder(bookingId, phoneNumber) {
     try {
         //call the getbooking function
+        console.log("getting booking");
         const response = await getBooking(bookingId);
+        console.log("got booking");
+
+        console.log("getting userid");
+        // const userId = await getUserIdByPhone(phoneNumber);
+        const userId = await getUserIdByPhone("705543726");
+        console.log("user id: ", userId);
+        console.log("got userid");
+
+        console.log("getting lead status");
+        const leadStatus = await getContactLeadStatus(userId);
+        console.log("got lead status");
         
         //error handling, if start time is elapsed or missing
         if (!response.booking || !response.booking.startTime) {
@@ -74,8 +89,14 @@ async function checkAndScheduleNextReminder(bookingId, phoneNumber) {
             //calculate sendAt time.
             const sendAt = new Date(startTime.getTime() - nextReminder * 60 * 60 * 1000);
 
+            const body = "";
             //build message body
-            const body = `Reminder: Your appointment is in ${nextReminder} hour${nextReminder > 1 ? 's' : ''}.`;
+            if(leadStatus === "OPEN_DEAL" ){ //TODO --> ask taskin what this status should be
+                body = `Reminder: Your appointment is in ${nextReminder} hour${nextReminder > 1 ? 's' : ''}.`;
+            }else{
+                body = `Reminder: Your appointment is in ${nextReminder} hour${nextReminder > 1 ? 's' : ''}., please confirm your attendance`;
+            }
+            
         
             // Check if a message with the same body is already scheduled
             const isAlreadyScheduled = await checkExistingScheduledMessage(phoneNumber, body);
@@ -149,7 +170,7 @@ async function listScheduledMessages(phoneNumber) {
 // listScheduledMessages("+61483963666")
 
 // Example usage
-// checkAndScheduleNextReminder(4390487, "+61483963666");
+checkAndScheduleNextReminder(4390487, "+61483963666");
 
 module.exports = {
     checkAndScheduleNextReminder,

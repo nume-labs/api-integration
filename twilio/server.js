@@ -10,6 +10,7 @@ const hubspot = require('@hubspot/api-client');
 const fs = require('fs').promises;
 const path = require('path');
 const {updateLeadStatus} = require('../hubspot/updateLead')
+const {checkAndScheduleNextReminder} = require('../cal/msgScheduler')
 
 
 const app = express();
@@ -140,6 +141,10 @@ async function handleNoteCreation(message, phoneNumber) {
 
 //make calls to the message scheduler in the cal file. 
 async function handleScheduleMessage(message, phoneNumber){
+  //if the lead status is confirmed, change the message 
+
+
+  //if the lead status is not confirmed, schedule a message which requires confirmation 
 
 }
 
@@ -170,7 +175,8 @@ async function handleCancel(twiml, phoneNumber) {
   twiml.message("Thank you, we will send you a cancel confirmation soon.");
 }
 
-async function handleReschedule(twiml) {
+async function handleReschedule(twiml, phoneNumber) {
+
 
   //CANCEL CAL BOOKING 
   //code here 
@@ -184,10 +190,8 @@ async function handleReschedule(twiml) {
 }
 
 
-// Main route to handle incoming SMS
 
 //TODO --> LOG AS AN SMS IN HUBSPOT
-
 async function handleYes(twiml, phoneNumber) {
   try {
     console.log("Starting handleYes function");
@@ -226,7 +230,7 @@ async function handleYes(twiml, phoneNumber) {
   }
 }
 
-
+// Main route to handle incoming SMS
 app.post('/sms', async (req, res) => {
   const twiml = new MessagingResponse();
   const incomingMessage = req.body.Body.trim().toLowerCase();

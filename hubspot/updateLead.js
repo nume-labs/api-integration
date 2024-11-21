@@ -44,5 +44,12 @@ async function updateLeadStatus(contactId, newLeadStatus) {
 // }
 // main();
 
+async function main(){
+  const status = await getContactLeadStatus(71196564006);
+  console.log(status);
+}
+
+main();
+
 
 module.exports = { getContactLeadStatus, updateLeadStatus };
