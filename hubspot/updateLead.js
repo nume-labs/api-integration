@@ -1,37 +1,48 @@
-const { Client } = require("@hubspot/api-client");
+const hubspot = require('@hubspot/api-client');
 require('dotenv').config();
-const axios = require('axios');
 
-async function updateLead(contactId, newLifecycleStage) {
-  const accessToken = process.env.HUBSPOT_ACCESS_TOKEN;
 
-  const data = {
-    properties: {
-      lifecyclestage: newLifecycleStage
-    }
-  };
+
+async function getContactLeadStatus(contactId) {
+  const hubspotClient = new hubspot.Client({ accessToken: process.env.HUBSPOT_ACCESS_TOKEN });
+
+  const properties = ["hs_lead_status"];
+  const propertiesWithHistory = undefined;
+  const associations = undefined;
+  const archived = false;
 
   try {
-    const response = await axios({
-      method: 'patch',
-      url: `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}`,
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      data: data
-    });
-
-    console.log('Contact updated successfully:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('Error updating contact:', error.response ? error.response.data : error.message);
-    throw error;
+    const apiResponse = await hubspotClient.crm.contacts.basicApi.getById(contactId, properties, propertiesWithHistory, associations, archived);
+    console.log(JSON.stringify(apiResponse, null, 2));
+    return apiResponse.properties.hs_lead_status;
+  } catch (e) {
+    console.error('Error fetching contact:', e.message === 'HTTP request failed' ? JSON.stringify(e.response, null, 2) : e);
+    throw e;
   }
 }
 
 
+async function updateLeadStatus(contactId, newLeadStatus) {
+  const hubspotClient = new hubspot.Client({ accessToken: process.env.HUBSPOT_ACCESS_TOKEN });
+  const properties = {
+    hs_lead_status: newLeadStatus
+  };
+  const SimplePublicObjectInput = { properties };
+
+  try {
+    const apiResponse = await hubspotClient.crm.contacts.basicApi.update(contactId, SimplePublicObjectInput);
+    console.log('Lead status updated successfully:', JSON.stringify(apiResponse, null, 2));
+    return apiResponse;
+  } catch (error) {
+    console.error('Error updating lead status:', error.message);
+    throw error;
+  }
+}
+
+// async function main(){
+//   updateLeadStatus(71196564006, "UNQUALIFIED");
+// }
+// main();
 
 
-module.exports = { updateLead };
-
+module.exports = { getContactLeadStatus, updateLeadStatus };

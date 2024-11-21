@@ -9,7 +9,7 @@ const axios = require('axios');
 const hubspot = require('@hubspot/api-client');
 const fs = require('fs').promises;
 const path = require('path');
-const {updateLead} = require('../hubspot/updateLead')
+const {updateLeadStatus} = require('../hubspot/updateLead')
 
 
 const app = express();
@@ -183,19 +183,6 @@ async function handleReschedule(twiml) {
   twiml.message("Thank you, we will send you a reschedule confirmation soon.");
 }
 
-// //subsequent messages need to be handled. lead status changed on hubspot aswell. 
-// async function handleYes(twiml, phoneNumber) {
-//   // await scheduleMsg(phoneNumber);
-//   await handleNoteCreation("Contact confirmed appointment", phoneNumber);
-//   //update lead status to Marketing qualified lead
-//   await updateLeadStatus(phoneNumber, "marketingqualifiedlead")
-//   //make note of updated lead status 
-//   await handleNoteCreation("Contact Lead status updated", phoneNumber)
-
-//   //schedule the next message. 
-
-//   twiml.message("Thank you for confirming your appointment.");
-// }
 
 // Main route to handle incoming SMS
 
@@ -212,7 +199,7 @@ async function handleYes(twiml, phoneNumber) {
 
     //Step 2 = update lead status
     console.log("Updating lead status");
-    await updateLead(71196564006, "marketingqualifiedlead");
+    await updateLeadStatus(71196564006, "OPEN_DEAL");
     //TODO --> handle with success message instead of logging to the console 
     console.log("Lead status updated successfully");
 
