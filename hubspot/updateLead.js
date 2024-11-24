@@ -1,55 +1,140 @@
-const hubspot = require('@hubspot/api-client');
 require('dotenv').config();
+const hubspot = require('@hubspot/api-client');
 
+// Initialize the HubSpot client with your access token
+const token = process.env.HUBSPOT_ACCESS_TOKEN;
 
+// Validate the token during initialization
+if (!token) {
+    console.error('HubSpot access token is missing. Please check your environment variables.');
+    process.exit(1);
+}
 
+const hubspotClient = new hubspot.Client({ accessToken: token });
+
+// Function to retrieve lead status (hs_lead_status) for a contact
 async function getContactLeadStatus(contactId) {
-  const hubspotClient = new hubspot.Client({ accessToken: process.env.HUBSPOT_ACCESS_TOKEN });
+    try {
+        // Validate input
+        if (!contactId) {
+            return {
+                statusCode: 400,
+                message: 'Contact ID is required',
+                data: null,
+            };
+        }
 
-  const properties = ["hs_lead_status"];
-  const propertiesWithHistory = undefined;
-  const associations = undefined;
-  const archived = false;
+        console.log('Fetching lead status for contact ID:', contactId);
 
-  try {
-    const apiResponse = await hubspotClient.crm.contacts.basicApi.getById(contactId, properties, propertiesWithHistory, associations, archived);
-    console.log(JSON.stringify(apiResponse, null, 2));
-    return apiResponse.properties.hs_lead_status;
-  } catch (e) {
-    console.error('Error fetching contact:', e.message === 'HTTP request failed' ? JSON.stringify(e.response, null, 2) : e);
-    throw e;
-  }
+        // Define properties to fetch
+        const properties = ["hs_lead_status"];
+        const apiResponse = await hubspotClient.crm.contacts.basicApi.getById(
+            contactId,
+            properties
+        );
+
+        // Extract lead status from response
+        const leadStatus = apiResponse.properties?.hs_lead_status;
+
+        if (!leadStatus) {
+            return {
+                statusCode: 404,
+                message: 'Lead status not found for the given contact',
+                data: null,
+            };
+        }
+
+        console.log('Lead status retrieved successfully:', leadStatus);
+
+        return {
+            statusCode: 200,
+            message: 'Lead status retrieved successfully',
+            data: { leadStatus },
+        };
+    } catch (error) {
+        console.error('Error fetching lead status:', error.message);
+
+        if (error.message === 'HTTP request failed' && error.response) {
+            console.error('Response details:', JSON.stringify(error.response, null, 2));
+            return {
+                statusCode: error.response.status || 500,
+                message: error.response.body?.message || 'An unknown error occurred',
+                data: null,
+            };
+        }
+
+        return {
+            statusCode: 500,
+            message: error.message || 'An unknown error occurred',
+            data: null,
+        };
+    }
 }
 
-
+// Function to update the lead status (hs_lead_status) for a contact
 async function updateLeadStatus(contactId, newLeadStatus) {
-  const hubspotClient = new hubspot.Client({ accessToken: process.env.HUBSPOT_ACCESS_TOKEN });
-  const properties = {
-    hs_lead_status: newLeadStatus
-  };
-  const SimplePublicObjectInput = { properties };
+    try {
+        // Validate inputs
+        if (!contactId || !newLeadStatus) {
+            return {
+                statusCode: 400,
+                message: 'Contact ID and new lead status are required',
+                data: null,
+            };
+        }
 
-  try {
-    const apiResponse = await hubspotClient.crm.contacts.basicApi.update(contactId, SimplePublicObjectInput);
-    console.log('Lead status updated successfully:', JSON.stringify(apiResponse, null, 2));
-    return apiResponse;
-  } catch (error) {
-    console.error('Error updating lead status:', error.message);
-    throw error;
-  }
+        console.log(`Updating lead status for contact ID ${contactId} to ${newLeadStatus}`);
+
+        // Define properties to update
+        const properties = { hs_lead_status: newLeadStatus };
+        const SimplePublicObjectInput = { properties };
+
+        const apiResponse = await hubspotClient.crm.contacts.basicApi.update(
+            contactId,
+            SimplePublicObjectInput
+        );
+
+        console.log('Lead status updated successfully:', JSON.stringify(apiResponse, null, 2));
+
+        return {
+            statusCode: 200,
+            message: 'Lead status updated successfully',
+            data: apiResponse,
+        };
+    } catch (error) {
+        console.error('Error updating lead status:', error.message);
+
+        if (error.message === 'HTTP request failed' && error.response) {
+            console.error('Response details:', JSON.stringify(error.response, null, 2));
+            return {
+                statusCode: error.response.status || 500,
+                message: error.response.body?.message || 'An unknown error occurred',
+                data: null,
+            };
+        }
+
+        return {
+            statusCode: 500,
+            message: error.message || 'An unknown error occurred',
+            data: null,
+        };
+    }
 }
 
-// async function main(){
-//   updateLeadStatus(71196564006, "UNQUALIFIED");
-// }
-// main();
+// //Example Usage
+// (async () => {
+//     const contactId = "71196564006"; // Replace with actual contact ID
 
-// async function getLeadStatus(){
-//   const status = await getContactLeadStatus(71196564006);
-//   console.log(status);
-// }
+//     const result = await getContactLeadStatus(contactId);
 
-// getLeadStatus();
-
+//     if (result.statusCode === 200) {
+//         console.log(result.message);
+//         console.log('Lead Status:', result.data.leadStatus);
+//     } else if (result.statusCode === 404) {
+//         console.warn(result.message);
+//     } else {
+//         console.error(`Error (${result.statusCode}): ${result.message}`);
+//     }
+// })();
 
 module.exports = { getContactLeadStatus, updateLeadStatus };
