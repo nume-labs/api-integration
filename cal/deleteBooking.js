@@ -1,6 +1,6 @@
 require('dotenv').config();
 // Load environment variable for the API key
-const API_KEY = process.env.API_KEY;
+const API_KEY = process.env.CAL_API_KEY;
 
 // Function to cancel a booking by ID
 async function deleteBooking(bookingId) {
