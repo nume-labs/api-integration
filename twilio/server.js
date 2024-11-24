@@ -10,7 +10,7 @@ const hubspot = require('@hubspot/api-client');
 const fs = require('fs').promises;
 const path = require('path');
 const {updateLeadStatus} = require('../hubspot/updateLead')
-const {checkAndScheduleNextReminder} = require('../cal/msgScheduler')
+const {checkAndScheduleNextReminder, listScheduledMessages} = require('../cal/msgScheduler')
 
 
 const app = express();
@@ -139,15 +139,6 @@ async function handleNoteCreation(message, phoneNumber) {
   }
 }
 
-//make calls to the message scheduler in the cal file. 
-async function handleScheduleMessage(message, phoneNumber){
-  //if the lead status is confirmed, change the message 
-
-
-  //if the lead status is not confirmed, schedule a message which requires confirmation 
-
-}
-
 
 function isTokenExpired(tokens) {
   return tokens.expires_at && Date.now() > tokens.expires_at;
@@ -158,9 +149,11 @@ async function handleCancel(twiml, phoneNumber) {
 
   //APPOINTMENT CANCELLED LEAD STATUS TO BE SET (not to be confused with lifecycle stage)
   //code here
+  const leadResponse = await updateLeadStatus(71196564006, "BAD_TIMING")
 
   //SEARCH FOR SCHEDULED MESSAGES, CANCEL THOSE
   //code here 
+  const cancelMsgResponse = await listScheduledMessages()
 
   //Delete booking using cal API
   await deleteBooking(phoneNumber);

@@ -1,7 +1,10 @@
 const hubspot = require('@hubspot/api-client');
-require('dotenv').config();
+require('dotenv').config({path: '../../.env'});
 
-const hubspotClient = new hubspot.Client({ accessToken: process.env.HUBSPOT_ACCESS_TOKEN });
+const token = process.env.HUBSPOT_ACCESS_TOKEN;
+const hubspotClient = new hubspot.Client({ accessToken: token });
+
+
 
 const properties = undefined;
 const propertiesWithHistory = undefined;
@@ -9,6 +12,7 @@ const associations = undefined;
 const archived = false;
 
 async function getContactById(contactId) {
+  console.log(token);
   try {
     const apiResponse = await hubspotClient.crm.contacts.basicApi.getById(
       contactId,

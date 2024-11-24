@@ -36,11 +36,11 @@ async function updateBooking(bookingId, updateDetails) {
   }
 }
 
-// Example usage
-updateBooking(100, {
-  title: "ExampleTitle",
-  start: "2024-11-24T13:00:00.000Z",
-  end: "2024-11-24T13:00:00.000Z",
-  status: "ExampleStatus",
-  description: "ExampleDesc"
-});
+// // Example usage
+// updateBooking(100, {
+//   title: "ExampleTitle",
+//   start: "2024-11-24T13:00:00.000Z",
+//   end: "2024-11-24T13:00:00.000Z",
+//   status: "ExampleStatus",
+//   description: "ExampleDesc"
+// });

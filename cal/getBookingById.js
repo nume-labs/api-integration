@@ -1,5 +1,5 @@
 // Load environment variable for the API key
-const API_KEY = process.env.API_KEY;
+const API_KEY = process.env.CAL_API_KEY;
 
 // Function to get booking details by ID
 async function getBooking(bookingId) {
@@ -18,7 +18,7 @@ async function getBooking(bookingId) {
   }
 }
 
-module.exports = getBooking;
+
 
 
 function decideReminder(bookingId){
@@ -79,4 +79,6 @@ async function patchBooking(body){
 }
 
 // Example usage
-// getBooking('100'); // Pass the specific booking ID here
+getBooking('4520291'); // Pass the specific booking ID here
+
+module.exports = getBooking;

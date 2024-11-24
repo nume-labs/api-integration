@@ -19,13 +19,47 @@ async function getBooking(bookingId) {
 
     try {
         const response = await fetch(url, options);
+        
+        if (!response.ok) {
+            return {
+                status: 'error',
+                statusCode: response.status,
+                message: `HTTP error! status: ${response.status}`,
+                data: null
+            };
+        }
+        
         const data = await response.json();
-        return data;
+        // console.log(data);
+        return {
+            status: 'success',
+            statusCode: 200,
+            message: 'Booking retrieved successfully',
+            data: data
+        };
     } catch (error) {
-        console.error('Error:', error);
-        throw error;
+        return {
+            status: 'error',
+            statusCode: 500,
+            message: error.message,
+            data: null
+        };
     }
 }
+
+async function testbooking(bookingId){
+    const result = await getBooking(bookingId);
+    if (result.status === 'error') {
+        console.error(`Error: ${result.message} (Status code: ${result.statusCode})`);
+        console.log(result);
+    } else {
+        console.log(`Success: ${result.message}`);
+        // Process result.data
+    }
+}
+
+// testbooking(4520291);
+
 
 function calculateNextReminder(startTime) {
     const now = new Date();
@@ -63,6 +97,7 @@ async function checkAndScheduleNextReminder(bookingId, phoneNumber) {
         //call the getbooking function
         console.log("getting booking");
         const response = await getBooking(bookingId);
+        console.log("booking response: ", response)
         console.log("got booking");
 
         console.log("getting userid");
@@ -73,14 +108,13 @@ async function checkAndScheduleNextReminder(bookingId, phoneNumber) {
 
         console.log("getting lead status");
         const leadStatus = await getContactLeadStatus(userId);
-        console.log("got lead status");
         
         //error handling, if start time is elapsed or missing
-        if (!response.booking || !response.booking.startTime) {
+        if (!response.data.booking || !response.data.booking.startTime) {
             throw new Error('Invalid response structure: startTime is missing.');
         }
 
-        const startTime = new Date(response.booking.startTime);
+        const startTime = new Date(response.data.booking.startTime);
         const nextReminder = calculateNextReminder(startTime);
 
         if (nextReminder !== null) {
@@ -89,12 +123,13 @@ async function checkAndScheduleNextReminder(bookingId, phoneNumber) {
             //calculate sendAt time.
             const sendAt = new Date(startTime.getTime() - nextReminder * 60 * 60 * 1000);
 
-            const body = "";
+            //TODO --> body builder function based on all the lead statuses. 
+            let body = "";
             //build message body
             if(leadStatus === "OPEN_DEAL" ){ //TODO --> ask taskin what this status should be
                 body = `Reminder: Your appointment is in ${nextReminder} hour${nextReminder > 1 ? 's' : ''}.`;
             }else{
-                body = `Reminder: Your appointment is in ${nextReminder} hour${nextReminder > 1 ? 's' : ''}., please confirm your attendance`;
+                body = `Reminder: Your appointment is in ${nextReminder} hour${nextReminder > 1 ? 's' : ''}. Please confirm your attendance`;
             }
             
         
@@ -106,6 +141,7 @@ async function checkAndScheduleNextReminder(bookingId, phoneNumber) {
                 console.log("A message with the same content is already scheduled. Skipping scheduling.");
             } else {
                 //send the message
+                console.log("this is the phonenumber: ", phoneNumber)
                 const response = await sendScheduledMessage(body, sendAt, phoneNumber);
                 console.log(`response: ${JSON.stringify(response, null, 2)}`);
             }
@@ -157,7 +193,7 @@ async function listScheduledMessages(phoneNumber) {
 
         // Log the scheduled messages for debugging
         scheduledMessages.forEach(m => console.log(m.body, m.sid, m.status));
-        console.log(scheduledMessages);
+        // console.log(scheduledMessages);
 
         // Return the list of scheduled messages
         return scheduledMessages;
@@ -167,14 +203,36 @@ async function listScheduledMessages(phoneNumber) {
     }
 }
 
-// listScheduledMessages("+61483963666")
+async function testcancel(){
+    const response = await listScheduledMessages('+61483963666');
+    console.log(response);
+}
 
-// Example usage
-checkAndScheduleNextReminder(4390487, "+61483963666");
+testcancel();
+
+// async function sendschmsg(bookingId){
+//     try {
+//         const response = await checkAndScheduleNextReminder(bookingId, "+61483963666");
+//         console.log("Response:", response);
+//     } catch (error) {
+//         if (error.response) {
+//             console.error("API Response Error:", error.response.status, error.response.data);
+//         } else {
+//             console.error("Error:", error.message);
+//         }
+//     }
+// }
+
+// sendschmsg(4520291);
+
+
+
+
 
 module.exports = {
     checkAndScheduleNextReminder,
     calculateNextReminder,
     getBooking, 
-    cancelMsg
+    cancelMsg, 
+    listScheduledMessages
 };

@@ -24,10 +24,10 @@ async function getLeadStatus(contactId){
       }
 }
 
-async function main(contactId){
-    const response = await getLeadStatus(contactId)
-    console.log(response);
-}
+// async function main(contactId){
+//     const response = await getLeadStatus(contactId)
+//     console.log(response);
+// }
 
 // main("71196564006");
 

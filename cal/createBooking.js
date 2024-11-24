@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 // Environment variable for security (use dotenv for Node.js if applicable)
-const API_KEY = process.env.API_KEY;
+const API_KEY = process.env.CAL_API_KEY;
 
 // Function to construct the booking request body
 function createBookingBody({ name, email, locationValue, locationOption, eventTypeId, start, end, timeZone, language }) {
@@ -52,8 +52,8 @@ createBooking({
   locationValue: "9717511173",
   locationOption: "phone",
   eventTypeId: 1365986,
-  start: "2024-12-10T19:00:00.000Z",
-  end: "2024-12-10T19:30:00.000Z",
+  start: "2024-11-26T19:00:00.000Z",
+  end: "2024-11-26T19:30:00.000Z",
   timeZone: "Asia/Kolkata",
   language: "English"
 });
