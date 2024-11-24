@@ -83,7 +83,7 @@ async function updateLeadStatus(contactId, newLeadStatus) {
             };
         }
 
-        console.log(`Updating lead status for contact ID ${contactId} to ${newLeadStatus}`);
+        // console.log(`Updating lead status for contact ID ${contactId} to ${newLeadStatus}`);
 
         // Define properties to update
         const properties = { hs_lead_status: newLeadStatus };
@@ -94,7 +94,7 @@ async function updateLeadStatus(contactId, newLeadStatus) {
             SimplePublicObjectInput
         );
 
-        console.log('Lead status updated successfully:', JSON.stringify(apiResponse, null, 2));
+        // console.log('Lead status updated successfully:', JSON.stringify(apiResponse, null, 2));
 
         return {
             statusCode: 200,

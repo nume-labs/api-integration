@@ -5,6 +5,7 @@ const twilio = require('twilio');
 
 const {getContactLeadStatus} = require('../hubspot/updateLead')
 const {getUserIdByPhone} = require('../hubspot/findUserByPhone')
+const {cancelMsg} = require('../twilio/cancelMsg')
 
 const API_KEY = process.env.CAL_API_KEY;
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
@@ -270,39 +271,6 @@ async function checkExistingScheduledMessage(phoneNumber, body) {
     }
 }
 
-async function cancelMsg(sid) {
-    try {
-        // Validate input
-        if (!sid) {
-            return {
-                statusCode: 400,
-                message: 'Message SID is required',
-                data: null,
-            };
-        }
-
-        // Attempt to cancel the message
-        const message = await client.messages(sid).update({ status: 'canceled' });
-
-        console.log(`Message canceled successfully. SID: ${message.sid}`);
-
-        return {
-            statusCode: 200,
-            message: 'Message canceled successfully',
-            data: { sid: message.sid, body: message.body },
-        };
-    } catch (error) {
-        console.error('Error canceling message:', error.message);
-
-        return {
-            statusCode: 500,
-            message: error.message,
-            data: null,
-        };
-    }
-}
-
-
 async function listScheduledMessages(phoneNumber) {
     try {
         // Validate input
@@ -345,6 +313,85 @@ async function listScheduledMessages(phoneNumber) {
         };
     }
 }
+
+async function handleCancelMessage(phoneNumber) {
+    try {
+        // Validate input
+        if (!phoneNumber) {
+            return {
+                statusCode: 400,
+                message: 'Phone number is required',
+                data: null,
+            };
+        }
+
+        console.log(`Fetching scheduled messages for phone number: ${phoneNumber}`);
+
+        // Get the list of scheduled messages
+        const listResponse = await listScheduledMessages(phoneNumber);
+
+        // Check if the list retrieval was successful
+        if (listResponse.statusCode !== 200) {
+            return {
+                statusCode: listResponse.statusCode,
+                message: `Failed to retrieve scheduled messages: ${listResponse.message}`,
+                data: null,
+            };
+        }
+
+        const scheduledMessages = listResponse.data;
+
+        // Handle case where there are no scheduled messages
+        if (!scheduledMessages || scheduledMessages.length === 0) {
+            console.log('No scheduled messages found for this phone number.');
+            return {
+                statusCode: 404,
+                message: 'No scheduled messages found for this phone number',
+                data: null,
+            };
+        }
+
+        console.log(`Found ${scheduledMessages.length} scheduled message(s).`);
+
+        // Cancel all scheduled messages (although there should only be one)
+        const cancellationResults = [];
+        for (const message of scheduledMessages) {
+            try {
+                console.log(`Cancelling message with SID: ${message.sid}`);
+                const cancelResponse = await cancelMsg(message.sid); // Capture the response
+                console.log(`Message with SID ${message.sid} canceled successfully.`);
+                cancellationResults.push({
+                    sid: message.sid,
+                    status: 'canceled',
+                    body: message.body,
+                    response: cancelResponse, // Include the full response for debugging or tracking
+                });
+            } catch (error) {
+                console.error(`Error cancelling message with SID ${message.sid}:`, error.message);
+                cancellationResults.push({
+                    sid: message.sid,
+                    status: 'failed',
+                    error: error.message,
+                });
+            }
+        }
+
+        return {
+            statusCode: 200,
+            message: 'Scheduled messages handled successfully',
+            data: cancellationResults,
+        };
+    } catch (error) {
+        console.error('Error in handleCancelMessage:', error.message);
+
+        return {
+            statusCode: 500,
+            message: error.message,
+            data: null,
+        };
+    }
+}
+
 
 //BELOW ARE EXAMPLE TESTS
 
@@ -403,6 +450,21 @@ async function listScheduledMessages(phoneNumber) {
 //     }
 // }
 
+// (async () => {
+//     const phoneNumber = '+61483963666'; // Replace with the actual phone number
+
+//     const result = await handleCancelMessage(phoneNumber);
+
+//     if (result.statusCode === 200) {
+//         console.log(result.message);
+//         console.log('Cancellation Results:', result.data);
+//     } else if (result.statusCode === 404) {
+//         console.warn(result.message);
+//     } else {
+//         console.error(`Error (${result.statusCode}): ${result.message}`);
+//     }
+// })();
+
 // // Example usage
 // testGetBooking(4520291); // Replace with actual booking ID
 
@@ -414,6 +476,6 @@ module.exports = {
     checkAndScheduleNextReminder,
     calculateNextReminder,
     getBooking, 
-    cancelMsg, 
-    listScheduledMessages
+    listScheduledMessages, 
+    handleCancelMessage
 };

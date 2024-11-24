@@ -55,16 +55,16 @@ async function deleteBooking(bookingId) {
     }
 }
 
-// Example usage
-(async () => {
-    const bookingId = '4520898'; // Replace with the specific booking ID
+// // Example usage
+// (async () => {
+//     const bookingId = '4520898'; // Replace with the specific booking ID
 
-    const result = await deleteBooking(bookingId);
+//     const result = await deleteBooking(bookingId);
 
-    if (result.statusCode === 200) {
-        console.log(result.message);
-        console.log('Canceled Booking Details:', result.data);
-    } else {
-        console.error(`Error (${result.statusCode}): ${result.message}`);
-    }
-})();
+//     if (result.statusCode === 200) {
+//         console.log(result.message);
+//         console.log('Canceled Booking Details:', result.data);
+//     } else {
+//         console.error(`Error (${result.statusCode}): ${result.message}`);
+//     }
+// })();

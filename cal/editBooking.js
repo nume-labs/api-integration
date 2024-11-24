@@ -90,23 +90,23 @@ async function updateBooking(bookingId, updateDetails) {
     }
 }
 
-// Example usage
-(async () => {
-    const bookingId = 4520291; // Replace with actual booking ID
-    const updateDetails = {
-        title: "Updated Title",
-        startTime: "2024-11-26T13:00:00.000Z", // Adjusted key name
-        endTime: "2024-11-26T14:00:00.000Z",   // Adjusted key name
-        status: "ACCEPTED",
-        description: "Updated Description",
-    };
+// // Example usage
+// (async () => {
+//     const bookingId = 4520291; // Replace with actual booking ID
+//     const updateDetails = {
+//         title: "Updated Title",
+//         startTime: "2024-11-26T13:00:00.000Z", // Adjusted key name
+//         endTime: "2024-11-26T14:00:00.000Z",   // Adjusted key name
+//         status: "ACCEPTED",
+//         description: "Updated Description",
+//     };
 
-    const result = await updateBooking(bookingId, updateDetails);
+//     const result = await updateBooking(bookingId, updateDetails);
 
-    if (result.statusCode === 200) {
-        console.log(result.message);
-        console.log('Updated Booking Details:', result.data);
-    } else {
-        console.error(`Error (${result.statusCode}): ${result.message}`);
-    }
-})();
+//     if (result.statusCode === 200) {
+//         console.log(result.message);
+//         console.log('Updated Booking Details:', result.data);
+//     } else {
+//         console.error(`Error (${result.statusCode}): ${result.message}`);
+//     }
+// })();

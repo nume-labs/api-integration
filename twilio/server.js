@@ -1,16 +1,16 @@
 require('dotenv').config();
 const express = require('express');
 const { MessagingResponse } = require('twilio').twiml;
-const deleteBooking = require('../cal/deleteBooking');
+const {deleteBooking} = require('../cal/deleteBooking');
 // const scheduleMsg = require('./msgScheduler');
 const createNote = require('../hubspot/createNote');
-const { getUserIdByPhone, getUserByPhone } = require('../hubspot/findUserByPhone');
+const { getUserIdByPhone } = require('../hubspot/findUserByPhone');
 const axios = require('axios');
 const hubspot = require('@hubspot/api-client');
 const fs = require('fs').promises;
 const path = require('path');
 const {updateLeadStatus} = require('../hubspot/updateLead')
-const {checkAndScheduleNextReminder, listScheduledMessages} = require('../cal/msgScheduler')
+const {checkAndScheduleNextReminder, listScheduledMessages, handleCancelMessage} = require('../cal/msgScheduler')
 
 
 const app = express();
@@ -102,43 +102,83 @@ async function exchangeForTokens(code) {
 }
 
 // Helper to find user ID and create a note
-async function handleNoteCreation(message, phoneNumber) {
+// TODO --> method signature should have phoneNumber added to it. 
+async function handleNoteCreation(message, phone) {
+  phoneNumber = "+36705543726"
   try {
-    let tokens = await readTokensFromFile();
-    //error handling for unfetched tokens
-    if (!tokens) {
-      throw new Error('No valid token. Please re-authenticate.');
-    }
+      // Step 1: Read tokens from file
+      console.log("Reading tokens from file...");
+      let tokens = await readTokensFromFile();
 
-    //check if tokens have expired
-    if (isTokenExpired(tokens)) {
-      //refresh tokens if they have expired
-      tokens = await refreshTokens(tokens);
-    }
+      // Handle case where tokens are not available
+      if (!tokens) {
+          return {
+              statusCode: 401,
+              message: 'No valid token. Please re-authenticate.',
+              data: null,
+          };
+      }
 
-    //initialize hubspot client, by passing the fetched access token
-    const hubspotClient = new hubspot.Client({ accessToken: tokens.access_token });
-    
-    // const response = await getUserIdByPhone(phoneNumber, hubspotClient);
-    // const userID = response.results?.[0]?.id;
-    
-    //example userID, to be removed in production.
-    userID = 71196564006;
-    if (userID) {
-      await createNote(message, userID, hubspotClient);
-      console.log(`Note created for userID: ${userID}`);
-    } else {
-      console.warn(`No user found for phone number: ${phoneNumber}`);
-    }
+      // Step 2: Check if tokens have expired
+      if (isTokenExpired(tokens)) {
+          console.log("Tokens expired. Refreshing tokens...");
+          tokens = await refreshTokens(tokens);
+      }
+
+      // Step 3: Initialize HubSpot client with the access token
+      console.log("Initializing HubSpot client...");
+      const hubspotClient = new hubspot.Client({ accessToken: tokens.access_token });
+
+      // Step 4: Fetch user ID by phone number (or use example user ID for testing)
+      console.log(`Fetching user ID for phone number: ${phoneNumber}`);
+      const userIdResponse = await getUserIdByPhone(phoneNumber, hubspotClient);
+
+      if (userIdResponse.statusCode !== 200 || !userIdResponse.data.userId) {
+          console.warn(`No user found for phone number: ${phoneNumber}`);
+          return {
+              statusCode: 404,
+              message: `No user found for phone number: ${phoneNumber}`,
+              data: null,
+          };
+      }
+
+      const userID = userIdResponse.data.userId;
+
+      // Step 5: Create note for the user
+      console.log(`Creating note for user ID: ${userID}`);
+      const noteResponse = await createNote(message, userID, hubspotClient);
+
+      if (noteResponse.statusCode !== 200) {
+          console.error(`Failed to create note: ${noteResponse.message}`);
+          return noteResponse;
+      }
+
+      console.log("Note created successfully");
+      return {
+          statusCode: 200,
+          message: 'Note created successfully',
+          data: noteResponse.data,
+      };
   } catch (error) {
-    console.error("Error finding user or creating note:", error);
-    if (error.response && error.response.status === 401) {
-      await fs.unlink(TOKEN_FILE_PATH).catch(() => {}); // Delete the token file
-      console.error("Authentication failed. Please re-authenticate.");
-    }
+      console.error("Error in handleNoteCreation:", error.message);
+
+      if (error.response && error.response.status === 401) {
+          console.error("Authentication failed. Deleting token file and prompting re-authentication...");
+          await fs.unlink(TOKEN_FILE_PATH).catch(() => {}); // Delete the token file
+          return {
+              statusCode: 401,
+              message: 'Authentication failed. Please re-authenticate.',
+              data: null,
+          };
+      }
+
+      return {
+          statusCode: 500,
+          message: error.message || 'An unknown error occurred',
+          data: null,
+      };
   }
 }
-
 
 function isTokenExpired(tokens) {
   return tokens.expires_at && Date.now() > tokens.expires_at;
@@ -153,7 +193,7 @@ async function handleCancel(twiml, phoneNumber) {
 
   //SEARCH FOR SCHEDULED MESSAGES, CANCEL THOSE
   //code here 
-  const cancelMsgResponse = await listScheduledMessages()
+  const cancelMsgResponse = await handleCancelMessage(phoneNumber)
 
   //Delete booking using cal API
   await deleteBooking(phoneNumber);
@@ -185,41 +225,128 @@ async function handleReschedule(twiml, phoneNumber) {
 
 
 //TODO --> LOG AS AN SMS IN HUBSPOT
+// async function handleYes(twiml, phoneNumber) {
+//   try {
+//     console.log("Starting handleYes function");
+//     //step1 = create note for booking confirmation
+//     console.log("Creating first note");
+//     await handleNoteCreation("Contact confirmed appointment", phoneNumber);
+//     //TODO --> handle with success message instead of logging to the console 
+//     console.log("First note created successfully");
+
+//     //Step 2 = update lead status
+//     console.log("Updating lead status");
+//     await updateLeadStatus(71196564006, "OPEN_DEAL");
+//     //TODO --> handle with success message instead of logging to the console 
+//     console.log("Lead status updated successfully");
+
+//     //Step 3 = create a second note for the updation of lead status
+//     console.log("Creating second note");
+//     await handleNoteCreation("Contact Lead status updated", phoneNumber);
+//     //TODO --> handle with success message instead of logging to the console 
+//     console.log("Second note created successfully");
+
+//     //Step 4 = schedule the next message
+//     await handleScheduleMessage(phoneNumber); 
+//     console.log("Scheduling next message");
+
+//     //Step 5 = create note for the newly scheduled message 
+//     await handleNoteCreation("New appointment reminder scheduled.", phoneNumber)
+
+//     console.log("Sending response message");
+//     twiml.message("Thank you for confirming your appointment.");
+//     console.log("Response message sent");
+
+//   } catch (error) {
+//     console.error("Error in handleYes function:", error);
+//     twiml.message("An error occurred while processing your request. Please try again later.");
+//   }
+// }
+
+
 async function handleYes(twiml, phoneNumber) {
   try {
-    console.log("Starting handleYes function");
-    //step1 = create note for booking confirmation
-    console.log("Creating first note");
-    await handleNoteCreation("Contact confirmed appointment", phoneNumber);
-    //TODO --> handle with success message instead of logging to the console 
-    console.log("First note created successfully");
+      console.log("Starting handleYes function");
 
-    //Step 2 = update lead status
-    console.log("Updating lead status");
-    await updateLeadStatus(71196564006, "OPEN_DEAL");
-    //TODO --> handle with success message instead of logging to the console 
-    console.log("Lead status updated successfully");
 
-    //Step 3 = create a second note for the updation of lead status
-    console.log("Creating second note");
-    await handleNoteCreation("Contact Lead status updated", phoneNumber);
-    //TODO --> handle with success message instead of logging to the console 
-    console.log("Second note created successfully");
+      console.log(`Fetching user ID for phone number: ${phoneNumber}`);
+      const userIdResponse = await getUserIdByPhone(phoneNumber);
 
-    //Step 4 = schedule the next message
-    await handleScheduleMessage(phoneNumber); 
-    console.log("Scheduling next message");
+      if (userIdResponse.statusCode !== 200 || !userIdResponse.data.userId) {
+          console.warn(`No user found for phone number: ${phoneNumber}`);
+          return {
+              statusCode: 404,
+              message: `No user found for phone number: ${phoneNumber}`,
+              data: null,
+          };
+      }
 
-    //Step 5 = create note for the newly scheduled message 
-    await handleNoteCreation("New appointment reminder scheduled.", phoneNumber)
+      const userID = userIdResponse.data.userId;
 
-    console.log("Sending response message");
-    twiml.message("Thank you for confirming your appointment.");
-    console.log("Response message sent");
+      // Step 1: Create a note for booking confirmation
+      console.log("Creating first note");
+      const noteResponse1 = await handleNoteCreation("Contact confirmed appointment", phoneNumber);
 
+      if (noteResponse1.statusCode !== 200) {
+          console.error(`Failed to create first note: ${noteResponse1.message}`);
+          twiml.message("An error occurred while confirming your appointment. Please try again later.");
+          return;
+      }
+      console.log("First note created successfully");
+
+      // Step 2: Update lead status
+      //TODO --> ASK TASKIN WHAT THE LEAD STATUS SHOULD BE EXACTLY.
+      console.log("Updating lead status");
+      const leadStatusResponse = await updateLeadStatus(userID, "OPEN_DEAL");
+
+      if (leadStatusResponse.statusCode !== 200) {
+          console.error(`Failed to update lead status: ${leadStatusResponse.message}`);
+          twiml.message("An error occurred while updating your appointment status. Please try again later.");
+          return;
+      }
+      console.log("Lead status updated successfully");
+
+      // Step 3: Create a second note for the lead status update
+      console.log("Creating second note");
+      const noteResponse2 = await handleNoteCreation("Contact Lead status updated", phoneNumber);
+
+      if (noteResponse2.statusCode !== 200) {
+          console.error(`Failed to create second note: ${noteResponse2.message}`);
+          twiml.message("An error occurred while processing your request. Please try again later.");
+          return;
+      }
+      console.log("Second note created successfully");
+
+      // Step 4: Schedule the next message
+      console.log("Scheduling next message");
+
+      //TODO --> needs bookingID
+      const scheduleResponse = await checkAndScheduleNextReminder(phoneNumber);
+
+      if (scheduleResponse.statusCode !== 200) {
+          console.error(`Failed to schedule next message: ${scheduleResponse.message}`);
+          twiml.message("An error occurred while scheduling your next reminder. Please try again later.");
+          return;
+      }
+      console.log("Next message scheduled successfully");
+
+      // Step 5: Create a note for the newly scheduled message
+      console.log("Creating third note");
+      const noteResponse3 = await handleNoteCreation("New appointment reminder scheduled.", phoneNumber);
+
+      if (noteResponse3.statusCode !== 200) {
+          console.error(`Failed to create third note: ${noteResponse3.message}`);
+          twiml.message("An error occurred while processing your request. Please try again later.");
+          return;
+      }
+      console.log("Third note created successfully");
+
+      // Send confirmation response
+      console.log("Sending response message");
+      twiml.message("Thank you for confirming your appointment.");
   } catch (error) {
-    console.error("Error in handleYes function:", error);
-    twiml.message("An error occurred while processing your request. Please try again later.");
+      console.error("Error in handleYes function:", error);
+      twiml.message("An error occurred while processing your request. Please try again later.");
   }
 }
 

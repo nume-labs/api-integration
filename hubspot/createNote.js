@@ -42,12 +42,12 @@ async function createNote(body, contactID, hubspotClient) {
             ],
         };
 
-        console.log("Creating note with payload:", JSON.stringify(notePayload, null, 2)); // Debugging
+        // console.log("Creating note with payload:", JSON.stringify(notePayload, null, 2)); // Debugging
 
         // Use HubSpot's API to create the note with association
         const apiResponse = await hubspotClient.crm.objects.notes.basicApi.create(notePayload);
 
-        console.log("Note successfully created:", JSON.stringify(apiResponse, null, 2));
+        // console.log("Note successfully created:", JSON.stringify(apiResponse, null, 2));
         return {
             statusCode: 200,
             message: 'Note successfully created',
