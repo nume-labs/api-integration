@@ -373,18 +373,38 @@ async function listScheduledMessages(phoneNumber) {
 
 // cancelMsg('SM9a71659784694300b3bf674c78eb5306')
 
-// async function testbooking(bookingId){
-//     const result = await getBooking(bookingId);
-//     if (result.status === 'error') {
-//         console.error(`Error: ${result.message} (Status code: ${result.statusCode})`);
-//         console.log(result);
-//     } else {
+// const { getBooking } = require('./path-to-getBooking'); // Import getBooking function
+
+// async function testGetBooking(bookingId) {
+//     try {
+//         console.log('Fetching booking...');
+//         const result = await getBooking(bookingId);
+
+//         if (result.statusCode !== 200) {
+//             console.error(`Error: ${result.message} (Status code: ${result.statusCode})`);
+//             return; // Exit if there's an error
+//         }
+
 //         console.log(`Success: ${result.message}`);
-//         // Process result.data
+//         console.log('Booking Data:', result.data);
+
+//         // Process booking data
+//         const booking = result.data.booking;
+//         if (booking) {
+//             console.log(`Booking Title: ${booking.title}`);
+//             console.log(`Start Time: ${booking.startTime}`);
+//             console.log(`End Time: ${booking.endTime}`);
+//             // Add more processing logic here as needed
+//         } else {
+//             console.warn('No booking data found.');
+//         }
+//     } catch (error) {
+//         console.error('Unexpected error while fetching booking:', error.message);
 //     }
 // }
 
-// testbooking(4520291);
+// // Example usage
+// testGetBooking(4520291); // Replace with actual booking ID
 
 
 
