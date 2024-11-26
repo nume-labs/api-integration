@@ -352,6 +352,7 @@ async function handleYes(twiml, phoneNumber) {
 
 // Main route to handle incoming SMS
 app.post('/sms', async (req, res) => {
+
   const twiml = new MessagingResponse();
   const incomingMessage = req.body.Body.trim().toLowerCase();
   const fromNumber = req.body.From;
