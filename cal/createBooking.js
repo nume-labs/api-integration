@@ -3,6 +3,8 @@ require('dotenv').config();
 // Environment variable for security
 const API_KEY = process.env.CAL_API_KEY;
 
+//TODO --> LISTEN TO WEBHOOK, TAKE IN ALL THE DETAILS, AND THEN CANCEL THAT BOOKING, AND CREATE A BOOKING FROM HERE WITH ALL THOSE DETAILS,
+//THAT WAY I CAN GET THE BOOKING ID AND PASS IT TO HUBSPOT. 
 // Function to construct the booking request body
 function createBookingBody({ name, email, locationValue, locationOption, eventTypeId, start, end, timeZone, language }) {
     return {
@@ -86,25 +88,25 @@ async function createBooking(bookingDetails) {
 }
 
 // // Example usage
-// (async () => {
-//     const bookingDetails = {
-//         name: "Faisal Test Wani V2",
-//         email: "fwani616@gmail.com",
-//         locationValue: "9717511173",
-//         locationOption: "phone",
-//         eventTypeId: 1365986,
-//         start: "2024-11-27T19:00:00.000Z",
-//         end: "2024-11-27T19:30:00.000Z",
-//         timeZone: "Asia/Kolkata",
-//         language: "English",
-//     };
+(async () => {
+    const bookingDetails = {
+        name: "Faisal Test Wani V2",
+        email: "fwani616@gmail.com",
+        locationValue: "9717511173",
+        locationOption: "phone",
+        eventTypeId: 1365986,
+        start: "2024-12-10T19:00:00.000Z",
+        end: "2024-12-10T19:30:00.000Z",
+        timeZone: "Asia/Kolkata",
+        language: "English",
+    };
 
-//     const result = await createBooking(bookingDetails);
+    const result = await createBooking(bookingDetails);
 
-//     if (result.statusCode === 200) {
-//         console.log(result.message);
-//         console.log('Booking Details:', result.data);
-//     } else {
-//         console.error(`Error (${result.statusCode}): ${result.message}`);
-//     }
-// })();
+    if (result.statusCode === 200) {
+        console.log(result.message);
+        console.log('Booking Details:', result.data);
+    } else {
+        console.error(`Error (${result.statusCode}): ${result.message}`);
+    }
+})();

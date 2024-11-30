@@ -11,6 +11,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const {updateLeadStatus} = require('../hubspot/updateLead')
 const {checkAndScheduleNextReminder, listScheduledMessages, handleCancelMessage} = require('../cal/msgScheduler')
+const {getMeetingIdByContactId} = require ('../cal/getMeeting')
 
 
 const app = express();
@@ -70,6 +71,7 @@ async function refreshTokens(tokens) {
 // OAuth 2.0 install route. this is where the flow originates from the first time server starts
 app.get('/install', (req, res) => {
   const authUrl = `https://app.hubspot.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=${SCOPE}`;
+  console.log("redirecting to..: ", authUrl)
   res.redirect(authUrl);
 });
 
@@ -320,8 +322,15 @@ async function handleYes(twiml, phoneNumber) {
       // Step 4: Schedule the next message
       console.log("Scheduling next message");
 
-      //TODO --> needs bookingID
-      const scheduleResponse = await checkAndScheduleNextReminder(phoneNumber);
+      console.log("getting meetingID")
+      //TODO --> remove static
+      // const meetingId = await getMeetingIdByContactId(userID);
+      const meetingId = await getMeetingIdByContactId(71196564006);
+
+      console.log("got meeting id: ", meetingId);
+
+      console.log("scheduling next reminder")
+      const scheduleResponse = await checkAndScheduleNextReminder(phoneNumber, meetingId);
 
       if (scheduleResponse.statusCode !== 200) {
           console.error(`Failed to schedule next message: ${scheduleResponse.message}`);

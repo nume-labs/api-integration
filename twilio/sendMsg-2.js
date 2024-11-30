@@ -22,7 +22,7 @@ const client = twilio(accountSid, authToken);
 async function createMessage() {
   try {
     const message = await client.messages.create({
-      body: "hello",
+      body: "yes",
       from: "+61483963666", // 2nd number (reciever)
       to: "+61483968666",   // 1st number (twilio acc)
     });

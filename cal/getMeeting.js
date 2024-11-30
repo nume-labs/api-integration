@@ -5,6 +5,8 @@ const axios = require('axios');
 const HUBSPOT_ACCESS_TOKEN = process.env.HUBSPOT_ACCESS_TOKEN;
 
 // Function to construct the search request body
+
+//TODO --> FILTER FOR EMAIL
 function createSearchBody(contactId) {
     return {
         filters: [
@@ -13,6 +15,9 @@ function createSearchBody(contactId) {
                 operator: 'EQ',
                 value: contactId, // Contact ID to filter meetings
             },
+        ],
+        properties: [
+            'hs_body_preview' // Specify the property you want to retrieve
         ],
         limit: 10, // Optional: Limit the number of results
     };
@@ -62,14 +67,20 @@ async function searchMeetingsByContact(contactId) {
             };
         }
 
+        // Log each meeting in the results array
+        const meetings = response.data.results;
+        console.log('Meetings fetched successfully. Details:');
+        meetings.forEach((meeting, index) => {
+            console.log(`Meeting ${index + 1}:`, JSON.stringify(meeting, null, 2));
+        });
+
         return {
             statusCode: 200,
             message: 'Meetings fetched successfully',
             data: response.data,
         };
     } catch (error) {
-        console.error('Error fetching meetings:', error.message);
-
+        // Handle errors gracefully
         return {
             statusCode: 500,
             message: error.message,
@@ -78,7 +89,35 @@ async function searchMeetingsByContact(contactId) {
     }
 }
 
-// // Example usage
+async function getMeetingIdByContactId(contactId) {
+    // Call the function that fetches all meeting data
+    const response = await searchMeetingsByContact(contactId);
+
+    // Log the full response for debugging
+    // console.log('Response:', JSON.stringify(response, null, 2));
+
+    // Check if the response is successful
+    if (response && response.statusCode === 200) {
+        // Ensure results array exists and has at least one item
+        if (response.data.results && response.data.results.length > 0) {
+            // Extract the first meeting ID from the results
+            const meetingId = response.data.results[0].id;
+
+            // Return the meeting ID
+            return {meetingId, statusCode: 200};
+        } else {
+            // console.error('No meetings found for this contact.');
+            return null; // No meetings found
+        }
+    } else {
+        // Log error details if the request failed
+        const statusCode = response?.statusCode || 'undefined';
+        const message = response?.message || 'An unknown error occurred.';
+        console.error(`Error (${statusCode}): ${message}`);
+        return response; // Return full response for debugging in case of error
+    }
+}
+// Example usage
 // (async () => {
 //     const contactId = '71196564006'; // Replace with your contact ID
 
@@ -86,12 +125,18 @@ async function searchMeetingsByContact(contactId) {
 
 //     if (result.statusCode === 200) {
 //         console.log(result.message);
-//         console.log('Meetings:', result.data);
 //     } else {
 //         console.error(`Error (${result.statusCode}): ${result.message}`);
 //     }
 // })();
 
+// (async () => {
+//     const contactId = "71196564006"; 
+//     const result = await getMeetingIdByContactId(contactId); 
+//     console.log(result, result.statusCode);
+// })();
+
 module.exports = {
-    searchMeetingsByContact
+    searchMeetingsByContact, 
+    getMeetingIdByContactId
 }

@@ -4,7 +4,7 @@ require('dotenv').config();
 // Function to fetch user ID by phone number
 async function getUserIdByPhone(phoneNumber) {
     //TODO --
-    phoneNumber = "+36705543726"
+    // phoneNumber = "+36705543726"
     try {
         // Validate inputs
         if (!phoneNumber) {

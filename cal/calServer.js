@@ -1,18 +1,36 @@
-process.on('uncaughtException', (err) => {
-    console.error('There was an uncaught exception:', err);
-  });
-  
-  process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  });
-
+require('dotenv').config();
 const express = require('express');
+const axios = require('axios');
+const crypto = require('crypto');
+
 const app = express();
+
+// Environment variables
+const clientID = process.env.CAL_CLIENT_ID;
+const clientSecret = process.env.CAL_CLIENT_SECRET;
+const redirectURI = 'http://localhost:3001/callback'; // Ensure this matches your registered URI
+const scope = 'READ_BOOKING WRITE_BOOKING'; // Adjust as needed
 
 // Middleware to parse JSON payloads
 app.use(express.json()); // Correct middleware for JSON payloads
 
-// Main route to handle Cal webhooks
+// Error handling for uncaught exceptions and unhandled promise rejections
+process.on('uncaughtException', (err) => {
+  console.error('There was an uncaught exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+// Function to generate a random state string
+function generateRandomState() {
+  return crypto.randomBytes(16).toString('hex');
+}
+
+console.log("clientid: ",clientID, "secret: ", clientSecret, "redirectURI: ", redirectURI, "scope: ",scope);
+
+// Route to handle Cal webhooks
 app.post('/cal', async (req, res) => {
   try {
     // Log the incoming request body
@@ -49,8 +67,57 @@ app.post('/cal', async (req, res) => {
   }
 });
 
-// Start the server
-app.listen(3001, () => {
-  console.log('Express server listening on port 3001');
+// Route to initiate OAuth installation process
+app.get('/install', (req, res) => {
+  const state = generateRandomState();
+  console.log("Installing.....");
+  const authUrl = `https://app.cal.com/auth/oauth2/authorize?client_id=${clientID}&state=asdfjasasdfasdfsd&redirect_uri=${redirectURI}&scope=${scope}`;
+  res.redirect(authUrl);
+  console.log("auth url: ", authUrl)
+  console.log("Reached after the first redirect");
 });
 
+// Callback route to handle authorization code and exchange it for an access token
+app.get('/callback', async (req, res) => {
+  console.log("at callback")
+  const { code } = req.query;
+  console.log("Callback received");
+  try {
+    console.log("This is the code: ", code);
+    const tokenResponse = await exchangeForTokens(code);
+    console.log('Access Token:', tokenResponse.access_token);
+    res.send('Authentication successful! You can now use the Cal.com API.');
+  } catch (error) {
+    console.error('Error during OAuth flow:', error.response ? error.response.data : error.message);
+    res.status(500).send('Authentication failed');
+  }
+});
+
+// Function to exchange authorization code for access token
+async function exchangeForTokens(code) {
+  try {
+    console.log("This is the code from the exchange token function, ", code);
+    const response = await axios.post('https://app.cal.com/api/auth/oauth/token', null, {
+      params: {
+        grant_type: 'authorization_code',
+        client_id: clientID,
+        client_secret: clientSecret,
+        redirect_uri: redirectURI,
+        code: code,
+      },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    });
+    console.log("This is the response data from the exchange token function: ", response.data);
+    return response.data;
+  } catch (error) {
+    throw new Error(`Failed to exchange tokens: ${error.response ? error.response.data : error.message}`);
+  }
+}
+
+// Start the Express server on port 3001
+app.listen(3001, () => {
+  console.log('Server running on http://localhost:3001');
+  console.log('To retrieve token, visit http://localhost:3001/install');
+});
