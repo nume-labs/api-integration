@@ -71,16 +71,16 @@ async function getContactById(contactId) {
 // Export the function for use in other modules
 module.exports = { getContactById };
 
-// Example usage
-(async () => {
-    const contactId = 71196564006; // Replace with actual contact ID
+// // Example usage
+// (async () => {
+//     const contactId = 71196564006; // Replace with actual contact ID
 
-    const result = await getContactById(contactId);
+//     const result = await getContactById(contactId);
 
-    if (result.statusCode === 200) {
-        console.log(result.message);
-        console.log('Contact Details:', result.data);
-    } else {
-        console.error(`Error (${result.statusCode}): ${result.message}`);
-    }
-})();
+//     if (result.statusCode === 200) {
+//         console.log(result.message);
+//         console.log('Contact Details:', result.data);
+//     } else {
+//         console.error(`Error (${result.statusCode}): ${result.message}`);
+//     }
+// })();

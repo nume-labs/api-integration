@@ -87,26 +87,26 @@ async function createBooking(bookingDetails) {
     }
 }
 
-// // Example usage
-(async () => {
-    const bookingDetails = {
-        name: "Faisal Test Wani V2",
-        email: "fwani616@gmail.com",
-        locationValue: "9717511173",
-        locationOption: "phone",
-        eventTypeId: 1365986,
-        start: "2024-12-10T19:00:00.000Z",
-        end: "2024-12-10T19:30:00.000Z",
-        timeZone: "Asia/Kolkata",
-        language: "English",
-    };
+// // // Example usage
+// (async () => {
+//     const bookingDetails = {
+//         name: "Faisal Test Wani V2",
+//         email: "fwani616@gmail.com",
+//         locationValue: "9717511173",
+//         locationOption: "phone",
+//         eventTypeId: 1365986,
+//         start: "2024-12-10T19:00:00.000Z",
+//         end: "2024-12-10T19:30:00.000Z",
+//         timeZone: "Asia/Kolkata",
+//         language: "English",
+//     };
 
-    const result = await createBooking(bookingDetails);
+//     const result = await createBooking(bookingDetails);
 
-    if (result.statusCode === 200) {
-        console.log(result.message);
-        console.log('Booking Details:', result.data);
-    } else {
-        console.error(`Error (${result.statusCode}): ${result.message}`);
-    }
-})();
+//     if (result.statusCode === 200) {
+//         console.log(result.message);
+//         console.log('Booking Details:', result.data);
+//     } else {
+//         console.error(`Error (${result.statusCode}): ${result.message}`);
+//     }
+// })();

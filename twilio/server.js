@@ -398,3 +398,7 @@ app.listen(3000, () => {
   console.log('Express server listening on port 3000');
   console.log('To start OAuth flow, visit: http://localhost:3000/install');
 });
+
+module.exports = {
+  handleNoteCreation
+}

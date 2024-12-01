@@ -46,6 +46,43 @@ async function getBooking(bookingId) {
     }
 }
 
+async function getBookingByUID(bookingId) {
+    const options = {
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${process.env.CAL_API_TOKEN}`, // Use environment variable for the token
+            'cal-api-version': 'v2'
+        }
+    };
+
+    try {
+        const response = await fetch(`https://api.cal.com/v2/bookings/${bookingId}`, options);
+
+        if (!response.ok) {
+            return {
+                statusCode: response.status,
+                message: `HTTP error! Status: ${response.status}`,
+                data: null
+            };
+        }
+
+        const data = await response.json();
+        console.log('Booking Details:', JSON.stringify(data, null, 2));
+        return {
+            statusCode: 200,
+            message: 'Booking retrieved successfully',
+            data: data
+        };
+    } catch (error) {
+        return {
+            statusCode: 500,
+            message: error.message,
+            data: null
+        };
+    }
+}
+
+
 function calculateNextReminder(startTime) {
     const now = new Date();
     const bookingTime = new Date(startTime);
@@ -145,6 +182,121 @@ async function checkAndScheduleNextReminder(bookingId, phoneNumber) {
         const leadStatus = await getContactLeadStatus(userId);
 
         const startTime = new Date(booking.startTime);
+        const nextReminder = calculateNextReminder(startTime);
+
+        if (nextReminder === null) {
+            return {
+                statusCode: 200,
+                message: 'No reminder needed at this time',
+                data: null,
+            };
+        }
+
+        console.log(`Scheduling ${nextReminder}-hour reminder...`);
+
+        // Calculate sendAt time
+        const sendAt = new Date(startTime.getTime() - nextReminder * 60 * 60 * 1000);
+
+        // Build message body based on lead status
+        let body = '';
+        if (leadStatus === 'OPEN_DEAL') {
+            body = `Reminder: Your appointment is in ${nextReminder} hour${nextReminder > 1 ? 's' : ''}.`;
+        } else {
+            body = `Reminder: Your appointment is in ${nextReminder} hour${nextReminder > 1 ? 's' : ''}. Please confirm your attendance.`;
+        }
+
+        // Check if a message with the same body is already scheduled
+        //TODO--> CHANGE TO PHONE NUMBER VARIABLE
+        const existingMessageResponse = await checkExistingScheduledMessage("+61483963666", body);
+
+        if (existingMessageResponse.statusCode !== 200) {
+            return {
+                statusCode: existingMessageResponse.statusCode,
+                message: `Failed to check existing scheduled messages: ${existingMessageResponse.message}`,
+                data: null,
+            };
+        }
+
+        if (existingMessageResponse.data.exists) {
+            console.log('A message with the same content is already scheduled. Skipping scheduling.');
+            return {
+                statusCode: 200,
+                message: 'A matching scheduled message already exists. Skipping scheduling.',
+                data: null,
+            };
+        }
+
+        // Send the scheduled message
+        console.log('Sending scheduled message...');
+        //TODO --> CHANGE THE PHONE NUMBER TO VAR
+        const sendMessageResponse = await sendScheduledMessage(body, sendAt, "+61483963666");
+
+        if (sendMessageResponse.statusCode !== 200) {
+            return {
+                statusCode: sendMessageResponse.statusCode,
+                message: `Failed to schedule message: ${sendMessageResponse.message}`,
+                data: null,
+            };
+        }
+
+        console.log(`Scheduled message successfully. Response SID: ${sendMessageResponse.data.sid}`);
+        
+        return {
+            statusCode: 200,
+            message: 'Reminder scheduled successfully',
+            data: { sid: sendMessageResponse.data.sid },
+        };
+    } catch (error) {
+        console.error('Error in checkAndScheduleNextReminder:', error.message);
+        
+        return {
+            statusCode: 500,
+            message: error.message,
+            data: null,
+        };
+    }
+}
+
+async function checkAndScheduleNextReminderContactId(bookingUID, contactId) {
+    try {
+        // Validate inputs
+        if (!bookingUID || !contactId) {
+            return {
+                statusCode: 400,
+                message: 'Missing required parameters: bookingId or contactId',
+                data: null,
+            };
+        }
+
+        console.log('Getting booking...');
+        const bookingResponse = await getBookingByUID(bookingUID);
+
+        // Check if booking retrieval was successful
+        if (bookingResponse.statusCode !== 200) {
+            return {
+                statusCode: bookingResponse.statusCode,
+                message: `Failed to retrieve booking: ${bookingResponse.message}`,
+                data: null,
+            };
+        }
+
+        console.log("getting the start time");
+
+        const booking = bookingResponse.data
+        const bookingStartTime = bookingResponse.data.data.startTime;
+        // Validate booking data
+        if (!booking || !bookingStartTime) {
+            return {
+                statusCode: 400,
+                message: 'Invalid booking data: startTime is missing',
+                data: null,
+            };
+        }
+
+        console.log('Getting lead status...');
+        const leadStatus = await getContactLeadStatus(contactId);
+
+        const startTime = new Date(bookingStartTime);
         const nextReminder = calculateNextReminder(startTime);
 
         if (nextReminder === null) {
@@ -450,6 +602,8 @@ async function handleCancelMessage(phoneNumber) {
 //     }
 // }
 
+// testGetBooking("sAmyUK6VQB7EMN1838o3i9");
+
 // (async () => {
 //     const phoneNumber = '+61483963666'; // Replace with the actual phone number
 
@@ -468,12 +622,33 @@ async function handleCancelMessage(phoneNumber) {
 // // Example usage
 // testGetBooking(4520291); // Replace with actual booking ID
 
+// (async () => {
+//     const bookingId = 'sAmyUK6VQB7EMN1838o3i9'; // Replace with actual booking ID
+//     const result = await getBookingByUID(bookingId);
+
+//     if (result.statusCode === 200) {
+//         console.log('Booking fetched successfully.');
+//     } else {
+//         console.error(`Error (${result.statusCode}): ${result.message}`);
+//     }
+// })();
 
 
 
+// (async () => {
+//     const bookingId = 'ftwCAavophbaKE3bdTkPJS'; // Replace with actual booking ID
+//     const result = await checkAndScheduleNextReminderContactId(bookingId, "71196564006");
+
+//     if (result.statusCode === 200) {
+//         console.log('Booking fetched successfully.');
+//     } else {
+//         console.error(`Error (${result.statusCode}): ${result.message}`);
+//     }
+// })();
 
 module.exports = {
     checkAndScheduleNextReminder,
+    checkAndScheduleNextReminderContactId,
     calculateNextReminder,
     getBooking, 
     listScheduledMessages, 
