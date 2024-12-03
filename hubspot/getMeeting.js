@@ -9,10 +9,9 @@ function createSearchBody() {
     return {
         filterGroups: [], // No filters to get all meetings
         properties: [
-            'hs_body_preview', // Specify the property you want to retrieve
             'hs_internal_meeting_notes' // Include internal notes for UID search
         ],
-        limit: 10 // Optional: Limit the number of results
+        limit: 100 // Increase limit if necessary
     };
 }
 
@@ -33,7 +32,7 @@ async function searchAllMeetings() {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${HUBSPOT_ACCESS_TOKEN}`, // Use your private app's access token
+            Authorization: `Bearer ${HUBSPOT_ACCESS_TOKEN}`,
         },
         data: body,
         url,
@@ -51,7 +50,7 @@ async function searchAllMeetings() {
         }
 
         const meetings = response.data.results;
-        console.log('Meetings fetched successfully.');
+        console.log('Meetings fetched successfully:', meetings.length);
         
         return {
             statusCode: 200,
@@ -96,9 +95,9 @@ async function getMeetingsByBookingUID(bookingUID) {
     }
 }
 
-// // Example usage function
+// Example usage function
 // async function exampleUsage() {
-//     const bookingUID = "5Jop1BNjpfYVWhit5amdx2"; // Example booking UID
+//     const bookingUID = "7GQndkSbeFtqYDr5dMUyuX"; // Example booking UID
 
 //     try {
 //         const result = await getMeetingsByBookingUID(bookingUID);
@@ -106,6 +105,7 @@ async function getMeetingsByBookingUID(bookingUID) {
 //         if (result.statusCode === 200) {
 //             console.log(result.message);
 //             console.log('Filtered Meetings:', JSON.stringify(result.data, null, 2));
+//             console.log("meeting id: ", result.data[0].id)
 //         } else {
 //             console.error(`Error (${result.statusCode}): ${result.message}`);
 //         }

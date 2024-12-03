@@ -105,8 +105,7 @@ async function exchangeForTokens(code) {
 
 // Helper to find user ID and create a note
 // TODO --> method signature should have phoneNumber added to it. 
-async function handleNoteCreation(message, phone) {
-  phoneNumber = "+36705543726"
+async function handleNoteCreation(message, phoneNumber) {
   try {
       // Step 1: Read tokens from file
       console.log("Reading tokens from file...");
@@ -227,43 +226,6 @@ async function handleReschedule(twiml, phoneNumber) {
 
 
 //TODO --> LOG AS AN SMS IN HUBSPOT
-// async function handleYes(twiml, phoneNumber) {
-//   try {
-//     console.log("Starting handleYes function");
-//     //step1 = create note for booking confirmation
-//     console.log("Creating first note");
-//     await handleNoteCreation("Contact confirmed appointment", phoneNumber);
-//     //TODO --> handle with success message instead of logging to the console 
-//     console.log("First note created successfully");
-
-//     //Step 2 = update lead status
-//     console.log("Updating lead status");
-//     await updateLeadStatus(71196564006, "OPEN_DEAL");
-//     //TODO --> handle with success message instead of logging to the console 
-//     console.log("Lead status updated successfully");
-
-//     //Step 3 = create a second note for the updation of lead status
-//     console.log("Creating second note");
-//     await handleNoteCreation("Contact Lead status updated", phoneNumber);
-//     //TODO --> handle with success message instead of logging to the console 
-//     console.log("Second note created successfully");
-
-//     //Step 4 = schedule the next message
-//     await handleScheduleMessage(phoneNumber); 
-//     console.log("Scheduling next message");
-
-//     //Step 5 = create note for the newly scheduled message 
-//     await handleNoteCreation("New appointment reminder scheduled.", phoneNumber)
-
-//     console.log("Sending response message");
-//     twiml.message("Thank you for confirming your appointment.");
-//     console.log("Response message sent");
-
-//   } catch (error) {
-//     console.error("Error in handleYes function:", error);
-//     twiml.message("An error occurred while processing your request. Please try again later.");
-//   }
-// }
 
 
 async function handleYes(twiml, phoneNumber) {
@@ -325,7 +287,8 @@ async function handleYes(twiml, phoneNumber) {
       console.log("getting meetingID")
       //TODO --> remove static
       // const meetingId = await getMeetingIdByContactId(userID);
-      const meetingId = await getMeetingIdByContactId(71196564006);
+      // const meetingId = await getMeetingIdByContactId(71196564006);
+      
 
       console.log("got meeting id: ", meetingId);
 

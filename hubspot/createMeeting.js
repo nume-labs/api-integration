@@ -23,7 +23,7 @@ async function createHubSpotMeeting({ startTime, endTime, externalUrl, body, own
         properties: meetingProperties,
         associations: [
             {
-                to: { id: contactId}, // TODO--> Adjust this ID as needed
+                to: { id: contactId}, 
                 types: [
                     {
                         associationCategory: "HUBSPOT_DEFINED",
