@@ -95,6 +95,10 @@ async function getMeetingsByBookingUID(bookingUID) {
     }
 }
 
+async function getOnlyScheduledMeeting(userID){
+    
+}
+
 // Example usage function
 // async function exampleUsage() {
 //     const bookingUID = "7GQndkSbeFtqYDr5dMUyuX"; // Example booking UID

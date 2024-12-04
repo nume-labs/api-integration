@@ -11,7 +11,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const {updateLeadStatus} = require('../hubspot/updateLead')
 const {checkAndScheduleNextReminder, listScheduledMessages, handleCancelMessage} = require('../cal/msgScheduler')
-const {getMeetingIdByContactId} = require ('../cal/getMeeting')
+const {getLatestScheduledMeeting} = require ('../hubspot/getMeetingByOutcome')
 
 
 const app = express();
@@ -285,15 +285,22 @@ async function handleYes(twiml, phoneNumber) {
       console.log("Scheduling next message");
 
       console.log("getting meetingID")
-      //TODO --> remove static
-      // const meetingId = await getMeetingIdByContactId(userID);
-      // const meetingId = await getMeetingIdByContactId(71196564006);
-      
+      //TODO --> get the meetingID
+      //get the latest scheduled meeting. 
+      const meetingResponse = await getLatestScheduledMeeting(userID, "SCHEDULED")
+      if(meetingResponse.statusCode === 200){
+        console.log("got latest meeting: ", meetingResponse.data);
+      }else{
+        console.error("Error has occured getting the meeting from hubspot: ", meetingResponse.message);
+      }
+      //should be bookingUID
+      const meetingId = meetingResponse.bookingUID;
 
       console.log("got meeting id: ", meetingId);
 
       console.log("scheduling next reminder")
-      const scheduleResponse = await checkAndScheduleNextReminder(phoneNumber, meetingId);
+      //needs to be from the bookingUID
+      const scheduleResponse = await checkAndScheduleNextReminderContactId(phoneNumber, meetingId);
 
       if (scheduleResponse.statusCode !== 200) {
           console.error(`Failed to schedule next message: ${scheduleResponse.message}`);
@@ -333,7 +340,6 @@ app.post('/sms', async (req, res) => {
 
   switch (incomingMessage) {
     case "hello":
-      //TODO --> CREATE NOTE FOR WHEN A MESSAGE IS SCHEDULED
       await handleNoteCreation(incomingMessage, fromNumber);
       twiml.message("Hello! How can I assist you today?");
       break;
