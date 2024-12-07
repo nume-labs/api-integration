@@ -211,13 +211,9 @@ async function handleCancel(twiml, phoneNumber) {
 
 async function handleReschedule(twiml, phoneNumber) {
 
+  //the rescheduling logic will be handled in the calServer. here we will just send the link to reschedule. Then from there the "RESCHEDULE" action will be handled on CalServer.
 
-  //CANCEL CAL BOOKING 
-  //code here 
-
-
-  //CANCEL SCHEDULED MESSAGES IF ANY
-  //code here
+  
 
 
   twiml.message("Thank you, we will send you a reschedule confirmation soon.");
@@ -226,8 +222,6 @@ async function handleReschedule(twiml, phoneNumber) {
 
 
 //TODO --> LOG AS AN SMS IN HUBSPOT
-
-
 async function handleYes(twiml, phoneNumber) {
   try {
       console.log("Starting handleYes function");

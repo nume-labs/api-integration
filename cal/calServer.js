@@ -8,15 +8,10 @@ const {checkAndScheduleNextReminderContactId} = require('../cal/msgScheduler')
 const {handleNoteCreation} = require('../twilio/server')
 const {getPhoneNumberByContactId} = require('../hubspot/getPhoneNumber')
 const {handleCancelMessage} = require('../cal/msgScheduler')
-const {getMeetingsByBookingUID} = require("../hubspot/getMeeting");
+const {getMeetingsByBookingContactOutcome} = require("../hubspot/getMeeting");
 const { updateMeetingOutcome } = require('../hubspot/updateMeetingOutcome');
 
 const app = express();
-
-//fromReschedule
-//cAhL8QSZRX5F1mfzWAvqiX
-//7GQndkSbeFtqYDr5dMUyuX
-
 
 // Environment variables
 const clientID = process.env.CAL_CLIENT_ID;
@@ -134,12 +129,18 @@ async function handleBookingRescheduled(payload) {
   const bookingUID = payload?.uid;
   const emailID = payload?.attendees[0].email;
   const rescheduleReason = payload?.responses?.rescheduleReason?.value;
-  const fromReschedule = payload?.fromReschedule;
+  const fromReschedule = payload?.rescheduleUid;
+
+  //can also get 
+  //rescheduleId || bookingId
 
   console.log("Booking UID: ", bookingUID);
   console.log("Email ID: ", emailID);
   console.log("Reschedule Reason: ", rescheduleReason);
   console.log("From Reschedule: ", fromReschedule);
+  if(fromReschedule === undefined){
+    console.log(payload)
+  }
 
   const getContactResult = await getUserIdByEmail(emailID);
   let contactId;
@@ -177,14 +178,15 @@ async function handleBookingRescheduled(payload) {
     return; // Exit if unable to update meeting note
   }
 
-  //change outcome of the original meeting. 
-  //pass in the fromReschedule uid
+
+  //previousMeetingID is the object ID for the previously created meeting in hubspot
   let previousMeetingID; 
-  const getMeetingResponse = await getMeetingsByBookingUID(fromReschedule)
+  const getMeetingResponse = await getMeetingsByBookingContactOutcome(contactId, fromReschedule, "SCHEDULED")
+
   if(getMeetingResponse.statusCode === 200){
     console.log("Got previous meeting");
     //extract the previous meeting id; 
-    previousMeetingID = fromReschedule.data[0].id;
+    previousMeetingID = getMeetingResponse.data[0].id;
   }else{
     console.error("Could not find previous booked meeting: ", getMeetingResponse.message);
   }
@@ -239,6 +241,7 @@ async function handleBookingRescheduled(payload) {
 async function handleBookingCanceled(payload) {
   const bookingUID = payload?.uid;
   const emailID = payload?.attendees[0].email;
+  const fromReschedule = payload?.uid
 
   console.log("Booking UID: ", bookingUID);
   console.log("Email ID: ", emailID);
@@ -258,19 +261,31 @@ async function handleBookingCanceled(payload) {
   
   console.log("All properties used in this function: ", ownerId, body, contactId, bookingUID, emailID);
 
-  //find the meetingID using bookingUID; 
-  let meetingID;
-  const getMeetingResponse = await getMeetingsByBookingUID(bookingUID)
-  if(getMeetingResponse.statusCode === 200){
-    console.log("Got previous meeting");
-    //extract the previous meeting id; 
-    meetingID = fromReschedule.data[0].id;
-  }else{
-    console.error("Could not find previous booked meeting: ", getMeetingResponse.message);
+  let previousMeetingID; 
+  const getScheduledResponse = await getMeetingsByBookingContactOutcome(contactId, fromReschedule, "SCHEDULED")
+  const getReScheduledResponse = await getMeetingsByBookingContactOutcome(contactId, fromReschedule, "RESCHEDULED")
+
+  if(getScheduledResponse.statusCode != 200 && getReScheduledResponse != 200){
+    console.error("Could not find previous meeting in either scheduled or rescheduled state: ", getScheduledResponse.message, getReScheduledResponse.message)
   }
-  
+
+  if(getScheduledResponse.statusCode === 200){
+    console.log("Got previous meeting from Scheduled State");
+    //extract the previous meeting id; 
+    previousMeetingID = getScheduledResponse.data[0].id;
+  }
+
+  if(getReScheduledResponse.statusCode === 200){
+    console.log("Got previous meeting from Rescheduled State");
+    //extract the previous meeting id; 
+    previousMeetingID = getReScheduledResponse.data[0].id;
+  }
+
+  console.log("Previous meeting id: ", previousMeetingID)
+
+
   //change the outcome
-  const outcomeResponse = await updateMeetingOutcome(meetingID, "CANCELLED")
+  const outcomeResponse = await updateMeetingOutcome(previousMeetingID, "CANCELED")
   if(outcomeResponse.statusCode === 200){
     console.log("outcome of previous meeting changed successfully: ", outcomeResponse.data)
   }else{

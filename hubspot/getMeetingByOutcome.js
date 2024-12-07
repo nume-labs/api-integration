@@ -101,7 +101,6 @@ function getLatestMeeting(meetings) {
 }
 
 // Function to get the latest scheduled meeting for a contact
-// Function to get the latest scheduled meeting for a contact
 async function getLatestScheduledMeeting(contactId, outcome) {
     const result = await getMeetingsByContactIDAndOutcome(contactId, outcome);
 
@@ -126,9 +125,9 @@ function stripHtmlTags(input) {
     return input.replace(/<\/?[^>]+(>|$)/g, "");
 }
 
-// Example usage function
+// // Example usage function
 // async function exampleUsage() {
-//     const contactId = "71196564006"; // Replace with the actual HubSpot contact ID
+//     const contactId = "120216225015"; // Replace with the actual HubSpot contact ID
 //     const outcome = "SCHEDULED"; // Desired meeting outcome
 
 //     try {

@@ -1,71 +1,85 @@
 require('dotenv').config();
 const axios = require('axios');
+const {getMeetingsByContactIDAndOutcome} = require('../hubspot/getMeetingByOutcome')
 
 // Environment variable for security
 const HUBSPOT_ACCESS_TOKEN = process.env.HUBSPOT_ACCESS_TOKEN;
 
 // Function to construct the search request body
-function createSearchBody() {
-    return {
-        filterGroups: [], // No filters to get all meetings
-        properties: [
-            'hs_internal_meeting_notes' // Include internal notes for UID search
-        ],
-        limit: 100 // Increase limit if necessary
-    };
+// function createSearchBody() {
+//     return {
+//         filterGroups: [], // No filters to get all meetings
+//         properties: [
+//             'hs_internal_meeting_notes' // Include internal notes for UID search
+//         ],
+//         limit: 100 // Increase limit if necessary
+//     };
+// }
+
+async function getMeetingsForContact(userId, outcome){
+    const response = await getMeetingsByContactIDAndOutcome(userId, outcome); 
+    console.log("getting meetings for specific contact and outcome...")
+    if(response.statusCode === 200){
+        console.log("response successful");
+        return response;
+    }else{
+        console.error("error: ", response.message); 
+        return response
+    }
 }
 
-// Function to search for all meetings
-async function searchAllMeetings() {
-    if (!HUBSPOT_ACCESS_TOKEN) {
-        return {
-            statusCode: 500,
-            message: 'Access token is missing. Please check your environment variables.',
-            data: null,
-        };
-    }
 
-    const url = 'https://api.hubapi.com/crm/v3/objects/meetings/search';
-    const body = createSearchBody();
+// // Function to search for all meetings
+// async function searchAllMeetings() {
+//     if (!HUBSPOT_ACCESS_TOKEN) {
+//         return {
+//             statusCode: 500,
+//             message: 'Access token is missing. Please check your environment variables.',
+//             data: null,
+//         };
+//     }
 
-    const options = {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${HUBSPOT_ACCESS_TOKEN}`,
-        },
-        data: body,
-        url,
-    };
+//     const url = 'https://api.hubapi.com/crm/v3/objects/meetings/search';
+//     const body = createSearchBody();
 
-    try {
-        const response = await axios(options);
+//     const options = {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json',
+//             Authorization: `Bearer ${HUBSPOT_ACCESS_TOKEN}`,
+//         },
+//         data: body,
+//         url,
+//     };
 
-        if (response.status !== 200) {
-            return {
-                statusCode: response.status,
-                message: `Failed to fetch meetings. HTTP status: ${response.status}`,
-                data: null,
-            };
-        }
+//     try {
+//         const response = await axios(options);
 
-        const meetings = response.data.results;
-        console.log('Meetings fetched successfully:', meetings.length);
+//         if (response.status !== 200) {
+//             return {
+//                 statusCode: response.status,
+//                 message: `Failed to fetch meetings. HTTP status: ${response.status}`,
+//                 data: null,
+//             };
+//         }
+
+//         const meetings = response.data.results;
+//         console.log('Meetings fetched successfully:', meetings.length);
         
-        return {
-            statusCode: 200,
-            message: 'Meetings fetched successfully',
-            data: meetings,
-        };
-    } catch (error) {
-        console.error('Error fetching meetings:', error.message);
-        return {
-            statusCode: 500,
-            message: error.message,
-            data: null,
-        };
-    }
-}
+//         return {
+//             statusCode: 200,
+//             message: 'Meetings fetched successfully',
+//             data: meetings,
+//         };
+//     } catch (error) {
+//         console.error('Error fetching meetings:', error.message);
+//         return {
+//             statusCode: 500,
+//             message: error.message,
+//             data: null,
+//         };
+//     }
+// }
 
 // Function to filter meetings by booking UID in internal notes
 function filterMeetingsByBookingUID(meetings, bookingUID) {
@@ -76,8 +90,8 @@ function filterMeetingsByBookingUID(meetings, bookingUID) {
 }
 
 // Main function to get and filter meetings by booking UID
-async function getMeetingsByBookingUID(bookingUID) {
-    const response = await searchAllMeetings();
+async function getMeetingsByBookingContactOutcome(contactId, bookingUID, outcome) {
+    const response = await getMeetingsForContact(contactId, outcome);
 
     if (response && response.statusCode === 200) {
         const filteredMeetings = filterMeetingsByBookingUID(response.data, bookingUID);
@@ -95,16 +109,15 @@ async function getMeetingsByBookingUID(bookingUID) {
     }
 }
 
-async function getOnlyScheduledMeeting(userID){
-    
-}
 
-// Example usage function
+//// Example usage function
 // async function exampleUsage() {
-//     const bookingUID = "7GQndkSbeFtqYDr5dMUyuX"; // Example booking UID
+//     const bookingUID = "1t6v682wd3WLRTMgCUzjGp"; // Example booking UID
+//     const outcome = "SCHEDULED"; 
+//     const contactId = "120216225015"; // Example contact ID
 
 //     try {
-//         const result = await getMeetingsByBookingUID(bookingUID);
+//         const result = await getMeetingsByBookingUID(contactId, bookingUID, outcome);
         
 //         if (result.statusCode === 200) {
 //             console.log(result.message);
@@ -122,5 +135,5 @@ async function getOnlyScheduledMeeting(userID){
 // exampleUsage();
 
 module.exports = {
-    getMeetingsByBookingUID
+    getMeetingsByBookingContactOutcome
 };
