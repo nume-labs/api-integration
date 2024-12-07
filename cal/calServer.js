@@ -13,6 +13,8 @@ const { updateMeetingOutcome } = require('../hubspot/updateMeetingOutcome');
 
 const app = express();
 
+//TODO --> ALL NOTE CREATIONS SHOULD BE AFTER THE ACTION
+
 // Environment variables
 const clientID = process.env.CAL_CLIENT_ID;
 const clientSecret = process.env.CAL_CLIENT_SECRET;
@@ -69,6 +71,7 @@ app.post('/cal', async (req, res) => {
 });
 
 // Function to handle BOOKING_CREATED event
+//TODO --> CREATE NEW USER IN HUBSPOT IF NOT ALREADY PRESENT
 async function handleBookingCreated(payload) {
   const bookingUID = payload?.uid;
   const emailID = payload?.attendees[0].email;
@@ -122,8 +125,6 @@ async function handleBookingCreated(payload) {
 
 }
 
-
-//TODO CHANGE OUTCOME OF MEETING TO RESCHEDULED, AND WHATEVER THE NEW DATE IS
 // Function to handle BOOKING_RESCHEDULED event
 async function handleBookingRescheduled(payload) {
   const bookingUID = payload?.uid;
@@ -236,7 +237,6 @@ async function handleBookingRescheduled(payload) {
   }
 }
 
-//TODO CHANGE OUTCOME OF MEETING TO CANCELLED. 
 // Function to handle BOOKING_CANCELED event
 async function handleBookingCanceled(payload) {
   const bookingUID = payload?.uid;
@@ -291,8 +291,6 @@ async function handleBookingCanceled(payload) {
   }else{
     console.error("Could not change outcome of previous meeting: ", outcomeResponse.message)
   }
-
-
 
   const phoneResult = await getPhoneNumberByContactId(contactId);
   if (phoneResult.statusCode != 200){

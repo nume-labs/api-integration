@@ -16,6 +16,8 @@ const {getLatestScheduledMeeting} = require ('../hubspot/getMeetingByOutcome')
 
 const app = express();
 
+//TODO --> ALL NOTE CREATIONS SHOULD BE AFTER THE ACTION
+
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 
@@ -23,7 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 const CLIENT_ID = process.env.HUBSPOT_CLIENT_ID;
 const CLIENT_SECRET = process.env.HUBSPOT_CLIENT_SECRET;
 const REDIRECT_URI = 'http://localhost:3000/callback';
-const SCOPE = 'crm.objects.contacts.read crm.objects.contacts.write';
+const SCOPE = 'crm.objects.contacts.read crm.objects.contacts.write settings.users.write settings.users.read';
 
 const TOKEN_FILE_PATH = path.join(__dirname, 'hubspot_tokens.json');
 
@@ -185,37 +187,68 @@ function isTokenExpired(tokens) {
   return tokens.expires_at && Date.now() > tokens.expires_at;
 }
 
+//TODO --> handle cancel
 // Handler functions for incoming message types
 async function handleCancel(twiml, phoneNumber) {
 
+  //Steps to do
+  //get the latest scheduled meeting 
+
+  //cancel the latest scheduled meeting 
+
+  //cancel the upcoming scheduled messages 
+
+  //update lead status to APPOINTMENT_CANCELED
+
   //APPOINTMENT CANCELLED LEAD STATUS TO BE SET (not to be confused with lifecycle stage)
   //code here
-  const leadResponse = await updateLeadStatus(71196564006, "BAD_TIMING")
 
-  //SEARCH FOR SCHEDULED MESSAGES, CANCEL THOSE
-  //code here 
-  const cancelMsgResponse = await handleCancelMessage(phoneNumber)
+  // const leadResponse = await updateLeadStatus(71196564006, "BAD_TIMING")
 
-  //Delete booking using cal API
-  await deleteBooking(phoneNumber);
+  // //SEARCH FOR SCHEDULED MESSAGES, CANCEL THOSE
+  // //code here 
+  // const cancelMsgResponse = await handleCancelMessage(phoneNumber)
 
-  //create a note for a cancelled appointment. 
-  await handleNoteCreation("Contact cancelled appointment", phoneNumber);
+  // //Delete booking using cal API
+  // await deleteBooking(phoneNumber);
 
-  //update lead status on hubspot
-  //code here
+  // //create a note for a cancelled appointment. 
+  // await handleNoteCreation("Contact cancelled appointment", phoneNumber);
+
+  // //update lead status on hubspot
+  // //code here
 
 
-  twiml.message("Thank you, we will send you a cancel confirmation soon.");
+  // twiml.message("Thank you, we will send you a cancel confirmation soon.");
 }
 
+//TODO --> HOW TO SEND GUI LINK OF RESCHEDULE
 async function handleReschedule(twiml, phoneNumber) {
+  console.log("starting the handleReschedule function...")
 
-  //the rescheduling logic will be handled in the calServer. here we will just send the link to reschedule. Then from there the "RESCHEDULE" action will be handled on CalServer.
+  console.log(`Fetching user ID for phone number: ${phoneNumber}`);
+  const userIdResponse = await getUserIdByPhone(phoneNumber);
 
-  
+  if (userIdResponse.statusCode !== 200 || !userIdResponse.data.userId) {
+      console.warn(`No user found for phone number: ${phoneNumber}`);
+      return {
+          statusCode: 404,
+          message: `No user found for phone number: ${phoneNumber}`,
+          data: null,
+      };
+  }
+  const userID = userIdResponse.data.userId;
+  // Create a note saying this person wants to reschedule the appointment. 
+  console.log("Creating first note");
+  const noteResponse1 = await handleNoteCreation("Contact wants to reschedule appointment", phoneNumber);
+        if (noteResponse1.statusCode !== 200) {
+          console.error(`Failed to create first note: ${noteResponse1.message}`);
+          twiml.message("An error occurred while confirming your appointment. Please try again later.");
+          return;
+      }
+      console.log("note created successfully");
 
-
+    
   twiml.message("Thank you, we will send you a reschedule confirmation soon.");
 }
 

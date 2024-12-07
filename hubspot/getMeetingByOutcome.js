@@ -125,28 +125,28 @@ function stripHtmlTags(input) {
     return input.replace(/<\/?[^>]+(>|$)/g, "");
 }
 
-// // Example usage function
-// async function exampleUsage() {
-//     const contactId = "120216225015"; // Replace with the actual HubSpot contact ID
-//     const outcome = "SCHEDULED"; // Desired meeting outcome
+// Example usage function
+async function exampleUsage() {
+    const contactId = "120216225015"; // Replace with the actual HubSpot contact ID
+    const outcome = "SCHEDULED"; // Desired meeting outcome
 
-//     try {
-//         const result = await getLatestScheduledMeeting(contactId, outcome);
+    try {
+        const result = await getLatestScheduledMeeting(contactId, outcome);
         
-//         if (result.statusCode === 200) {
-//             console.log(result.message);
-//             console.log('Latest Scheduled Meeting:', JSON.stringify(result.data, null, 2));
-//             console.log('Booking UID:', result.bookingUID);
-//         } else {
-//             console.error(`Error (${result.statusCode}): ${result.message}`);
-//         }
-//     } catch (error) {
-//         console.error('Unexpected error during example usage:', error);
-//     }
-// }
+        if (result.statusCode === 200) {
+            console.log(result.message);
+            console.log('Latest Scheduled Meeting:', JSON.stringify(result.data, null, 2));
+            console.log('Booking UID:', result.bookingUID);
+        } else {
+            console.error(`Error (${result.statusCode}): ${result.message}`);
+        }
+    } catch (error) {
+        console.error('Unexpected error during example usage:', error);
+    }
+}
 
-// // Execute the example usage function
-// exampleUsage();
+// Execute the example usage function
+exampleUsage();
 
 module.exports = {
     getMeetingsByContactIDAndOutcome,
