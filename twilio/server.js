@@ -10,7 +10,7 @@ const hubspot = require('@hubspot/api-client');
 const fs = require('fs').promises;
 const path = require('path');
 const {updateLeadStatus} = require('../hubspot/updateLead')
-const {checkAndScheduleNextReminder, listScheduledMessages, handleCancelMessage} = require('../cal/msgScheduler')
+const {checkAndScheduleNextReminderContactId, listScheduledMessages, handleCancelMessage} = require('../cal/msgScheduler')
 const {getLatestScheduledMeeting} = require ('../hubspot/getMeetingByOutcome')
 const {getBookingIdByUid} = require('../cal/getIdByUid');
 
@@ -275,7 +275,7 @@ async function handleReschedule(twiml, phoneNumber) {
 //TODO --> LOG AS AN SMS IN HUBSPOT
 async function handleYes(twiml, phoneNumber) {
   try {
-    
+
       console.log("Starting handleYes function");
       console.log(`Fetching user ID for phone number: ${phoneNumber}`);
       const userIdResponse = await getUserIdByPhone(phoneNumber);
@@ -337,14 +337,14 @@ async function handleYes(twiml, phoneNumber) {
       }else{
         console.error("Error has occured getting the meeting from hubspot: ", meetingResponse.message);
       }
-      //should be bookingUID
-      const meetingId = meetingResponse.bookingUID;
 
-      console.log("got meeting id: ", meetingId);
+      const bookingUID = meetingResponse.bookingUID;
+
+      console.log("got booking uid: ", bookingUID);
 
       console.log("scheduling next reminder")
       //needs to be from the bookingUID
-      const scheduleResponse = await checkAndScheduleNextReminderContactId(phoneNumber, meetingId);
+      const scheduleResponse = await checkAndScheduleNextReminderContactId(bookingUID, userID);
 
       if (scheduleResponse.statusCode !== 200) {
           console.error(`Failed to schedule next message: ${scheduleResponse.message}`);
