@@ -55,6 +55,10 @@ async function deleteBooking(bookingId) {
     }
 }
 
+module.exports = {
+    deleteBooking
+}
+
 // // Example usage
 // (async () => {
 //     const bookingId = '4520898'; // Replace with the specific booking ID

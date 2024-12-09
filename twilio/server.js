@@ -12,6 +12,7 @@ const path = require('path');
 const {updateLeadStatus} = require('../hubspot/updateLead')
 const {checkAndScheduleNextReminder, listScheduledMessages, handleCancelMessage} = require('../cal/msgScheduler')
 const {getLatestScheduledMeeting} = require ('../hubspot/getMeetingByOutcome')
+const {getBookingIdByUid} = require('../cal/getIdByUid');
 
 
 const app = express();
@@ -188,38 +189,55 @@ function isTokenExpired(tokens) {
 }
 
 //TODO --> handle cancel
-// Handler functions for incoming message types
+// this function cancels the appointment, then the rest of the workflow is handled via the calServer --> handleCancel function. 
 async function handleCancel(twiml, phoneNumber) {
 
+  console.log(`Fetching user ID for phone number: ${phoneNumber}`);
+  const userIdResponse = await getUserIdByPhone(phoneNumber);
+  if (userIdResponse.statusCode !== 200 || !userIdResponse.data.userId) {
+      console.warn(`No user found for phone number: ${phoneNumber}`);
+      return {
+          statusCode: 404,
+          message: `No user found for phone number: ${phoneNumber}`,
+          data: null,
+      };
+  }
+  const userID = userIdResponse.data.userId;
+
+
   //Steps to do
-  //get the latest scheduled meeting 
+  //get the latest scheduled meeting
+  let bookingUID
+  const meetingResponse = await getLatestScheduledMeeting(userID);
+  if(meetingResponse.statusCode === 200){
+    bookingUID = meetingResponse.bookingUID;
+  }else{
+    console.error("error when getting previous meeting ID: ", meetingResponse.message);
+  }
+  //get bookingID from UID
+  const getIdFromCalResponse = await getBookingIdByUid(bookingUID);
+  let bookingID
+  if(getIdFromCalResponse.statusCode === 200){
+    bookingID = getIdFromCalResponse.data.data.id;
+  }else{
+    console.log("could not get ID from UID: ", getIdFromCalResponse.message);
+  }
 
-  //cancel the latest scheduled meeting 
+  //cancel booking on cal using this id
+  const cancelCalResponse = await deleteBooking(bookingID); 
+  if(cancelCalResponse.statusCode === 200){
+    console.log("booking cancelled successfully");
+    //make a note flagging this cancelled booking 
+    const cancelNoteResponse = await handleNoteCreation(`meeting has been cancelled of booking ID: ${bookingID} and UID: ${bookingUID}`); 
+    if(cancelNoteResponse.statusCode != 200){
+      console.error("Could not create note for the canceled booking"); 
+    }
+    console.log("Note for canceled booking created successfully");
+  }else{
+    console.error("Could not cancel booking: ", cancelCalResponse.message);
+  }
 
-  //cancel the upcoming scheduled messages 
-
-  //update lead status to APPOINTMENT_CANCELED
-
-  //APPOINTMENT CANCELLED LEAD STATUS TO BE SET (not to be confused with lifecycle stage)
-  //code here
-
-  // const leadResponse = await updateLeadStatus(71196564006, "BAD_TIMING")
-
-  // //SEARCH FOR SCHEDULED MESSAGES, CANCEL THOSE
-  // //code here 
-  // const cancelMsgResponse = await handleCancelMessage(phoneNumber)
-
-  // //Delete booking using cal API
-  // await deleteBooking(phoneNumber);
-
-  // //create a note for a cancelled appointment. 
-  // await handleNoteCreation("Contact cancelled appointment", phoneNumber);
-
-  // //update lead status on hubspot
-  // //code here
-
-
-  // twiml.message("Thank you, we will send you a cancel confirmation soon.");
+  twiml.message("your meeting has been canceled, we hope to hear from you soon.");
 }
 
 //TODO --> HOW TO SEND GUI LINK OF RESCHEDULE
@@ -249,7 +267,7 @@ async function handleReschedule(twiml, phoneNumber) {
       console.log("note created successfully");
 
     
-  twiml.message("Thank you, we will send you a reschedule confirmation soon.");
+  twiml.message("To reschedule your appointment, please open the confirmation email you received and click the 'Reschedule' button at the bottom.");
 }
 
 
@@ -257,9 +275,8 @@ async function handleReschedule(twiml, phoneNumber) {
 //TODO --> LOG AS AN SMS IN HUBSPOT
 async function handleYes(twiml, phoneNumber) {
   try {
+    
       console.log("Starting handleYes function");
-
-
       console.log(`Fetching user ID for phone number: ${phoneNumber}`);
       const userIdResponse = await getUserIdByPhone(phoneNumber);
 
@@ -314,7 +331,7 @@ async function handleYes(twiml, phoneNumber) {
       console.log("getting meetingID")
       //TODO --> get the meetingID
       //get the latest scheduled meeting. 
-      const meetingResponse = await getLatestScheduledMeeting(userID, "SCHEDULED")
+      const meetingResponse = await getLatestScheduledMeeting(userID)
       if(meetingResponse.statusCode === 200){
         console.log("got latest meeting: ", meetingResponse.data);
       }else{
