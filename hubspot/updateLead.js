@@ -122,19 +122,19 @@ async function updateLeadStatus(contactId, newLeadStatus) {
 }
 
 // //Example Usage
-// (async () => {
-//     const contactId = "71196564006"; // Replace with actual contact ID
+(async () => {
+    const contactId = "120216225015"; // Replace with actual contact ID
 
-//     const result = await getContactLeadStatus(contactId);
+    const result = await getContactLeadStatus(contactId);
 
-//     if (result.statusCode === 200) {
-//         console.log(result.message);
-//         console.log('Lead Status:', result.data.leadStatus);
-//     } else if (result.statusCode === 404) {
-//         console.warn(result.message);
-//     } else {
-//         console.error(`Error (${result.statusCode}): ${result.message}`);
-//     }
-// })();
+    if (result.statusCode === 200) {
+        console.log(result.message);
+        console.log('Lead Status:', result.data.leadStatus);
+    } else if (result.statusCode === 404) {
+        console.warn(result.message);
+    } else {
+        console.error(`Error (${result.statusCode}): ${result.message}`);
+    }
+})();
 
 module.exports = { getContactLeadStatus, updateLeadStatus };

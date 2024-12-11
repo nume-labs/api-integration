@@ -107,7 +107,6 @@ async function exchangeForTokens(code) {
 }
 
 // Helper to find user ID and create a note
-// TODO --> method signature should have phoneNumber added to it. 
 async function handleNoteCreation(message, phoneNumber) {
   try {
       // Step 1: Read tokens from file
@@ -188,7 +187,6 @@ function isTokenExpired(tokens) {
   return tokens.expires_at && Date.now() > tokens.expires_at;
 }
 
-//TODO --> handle cancel
 // this function cancels the appointment, then the rest of the workflow is handled via the calServer --> handleCancel function. 
 async function handleCancel(twiml, phoneNumber) {
 
@@ -303,9 +301,8 @@ async function handleYes(twiml, phoneNumber) {
       console.log("First note created successfully");
 
       // Step 2: Update lead status
-      //TODO --> ASK TASKIN WHAT THE LEAD STATUS SHOULD BE EXACTLY.
       console.log("Updating lead status");
-      const leadStatusResponse = await updateLeadStatus(userID, "OPEN_DEAL");
+      const leadStatusResponse = await updateLeadStatus(userID, "APPOINTMENT_CONFIRMED");
 
       if (leadStatusResponse.statusCode !== 200) {
           console.error(`Failed to update lead status: ${leadStatusResponse.message}`);
@@ -329,7 +326,6 @@ async function handleYes(twiml, phoneNumber) {
       console.log("Scheduling next message");
 
       console.log("getting meetingID")
-      //TODO --> get the meetingID
       //get the latest scheduled meeting. 
       const meetingResponse = await getLatestScheduledMeeting(userID)
       if(meetingResponse.statusCode === 200){

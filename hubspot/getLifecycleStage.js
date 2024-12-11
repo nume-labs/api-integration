@@ -19,7 +19,7 @@ const associations = undefined;
 const archived = false;
 
 // Function to retrieve the lead status (lifecycle stage) of a contact
-async function getLeadStatus(contactId) {
+async function getLifeCycleStage(contactId) {
     try {
         // Validate input
         if (!contactId) {
@@ -81,9 +81,9 @@ async function getLeadStatus(contactId) {
 
 // //Example Usage
 // (async () => {
-//     const contactId = "71196564006"; // Replace with actual contact ID
+//     const contactId = "120216225015"; // Replace with actual contact ID
 
-//     const result = await getLeadStatus(contactId);
+//     const result = await getLifeCycleStage(contactId);
 
 //     if (result.statusCode === 200) {
 //         console.log(result.message);
@@ -95,4 +95,4 @@ async function getLeadStatus(contactId) {
 //     }
 // })();
 
-module.exports = { getLeadStatus };
+module.exports = { getLifeCycleStage };

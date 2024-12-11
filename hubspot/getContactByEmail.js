@@ -73,7 +73,7 @@ async function getUserIdByEmail(email) {
     }
 }
 
-// Example usage
+// // Example usage
 // (async () => {
 //     const email = "fwani616@gmail.com"; // Replace with actual email
 

@@ -10,6 +10,7 @@ const {getPhoneNumberByContactId} = require('../hubspot/getPhoneNumber')
 const {handleCancelMessage} = require('../cal/msgScheduler')
 const {getMeetingsByBookingContactOutcome} = require("../hubspot/getMeeting");
 const { updateMeetingOutcome } = require('../hubspot/updateMeetingOutcome');
+const {updateLeadStatus} = require('../hubspot/updateLead')
 
 const app = express();
 
@@ -84,8 +85,10 @@ async function handleBookingCreated(payload) {
     contactId = getContactResult.data.userId;
     console.log("contact id: " , contactId);
   }else{
+    //TODO --> Create new user here
     console.error(`Error (${getContactResult.statusCode}): ${getContactResult.message}`);
   }
+
 
   const startTime = payload?.startTime;
   const endTime = payload?.endTime;
@@ -122,6 +125,20 @@ async function handleBookingCreated(payload) {
     console.warn("error: ", messageSchedulerResult.message)
   }
 
+  
+  //update lead status
+  console.log("Updating lead status");
+  const leadStatusResponse = await updateLeadStatus(contactId, "APPOINTMENT_SCHEDULED");
+
+  if (leadStatusResponse.statusCode !== 200) {
+      console.error(`Failed to update lead status: ${leadStatusResponse.message}`);
+      twiml.message("An error occurred while updating your appointment status. Please try again later.");
+      return;
+  }
+  console.log("Lead status updated successfully");
+
+  console.log("workflow complete")
+
 
 }
 
@@ -152,6 +169,19 @@ async function handleBookingRescheduled(payload) {
     console.error(`Error (${getContactResult.statusCode}): ${getContactResult.message}`);
     return; // Exit if unable to retrieve contact ID
   }
+
+  //TODO --> WHAT LEAD STATUS SHOULD BE THERE FOR RESCHEDULED?
+
+    // //update lead status
+    // console.log("Updating lead status");
+    // const leadStatusResponse = await updateLeadStatus(contactId, "APPOINTMENT_RESCHEDULED");
+  
+    // if (leadStatusResponse.statusCode !== 200) {
+    //     console.error(`Failed to update lead status: ${leadStatusResponse.message}`);
+    //     twiml.message("An error occurred while updating your appointment status. Please try again later.");
+    //     return;
+    // }
+    // console.log("Lead status updated successfully");
 
   const startTime = payload?.startTime;
   const endTime = payload?.endTime;
@@ -256,6 +286,8 @@ async function handleBookingCanceled(payload) {
     return; // Exit if unable to retrieve contact ID
   }
 
+
+
   const ownerId = process.env.HUBSPOT_OWNER_ID;
   const body = "Booking has been canceled. No further actions are required.";
   
@@ -310,6 +342,17 @@ async function handleBookingCanceled(payload) {
     console.error(`Error cancelling messages: (${cancelScheduledMessageResult.statusCode}): ${cancelScheduledMessageResult.message}`);
     return; // Exit if unable to cancel scheduled messages
   }
+
+  //update lead status
+  console.log("Updating lead status");
+  const leadStatusResponse = await updateLeadStatus(contactId, "APPOINTMENT_CANCELLED");
+
+  if (leadStatusResponse.statusCode !== 200) {
+      console.error(`Failed to update lead status: ${leadStatusResponse.message}`);
+      twiml.message("An error occurred while updating your appointment status. Please try again later.");
+      return;
+  }
+  console.log("Lead status updated successfully");
 
   console.log('Scheduled messages cancelled successfully.');
 }
