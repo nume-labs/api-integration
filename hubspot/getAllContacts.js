@@ -24,4 +24,4 @@ async function getContactsPage(limit, after, properties, propertiesWithHistory, 
 }
 
 // Call the async function with specific parameters
-getContactsPage(10, undefined, undefined, undefined, undefined, false); // Adjust arguments as needed
+// getContactsPage(10, undefined, undefined, undefined, undefined, false); // Adjust arguments as needed

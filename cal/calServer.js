@@ -96,6 +96,7 @@ async function handleBookingCreated(payload) {
   const ownerId = process.env.HUBSPOT_OWNER_ID;
   const body = "Booking scheduled, BookingUID can be found in the internal notes"
   console.log("All properties used in this function: ", startTime, endTime, externalUrl, ownerId, body, contactId, bookingUID, emailID)
+
   //create meeting note in hubspot 
   const meetingNoteResult = await createHubSpotMeeting({startTime, endTime, externalUrl, body, ownerId, bookingUID, contactId });
   if (meetingNoteResult.statusCode === 200) {
@@ -151,7 +152,7 @@ async function handleBookingRescheduled(payload) {
 
   //can also get 
   //rescheduleId || bookingId
-
+  //TODO --> ERROR HANDLING? 
   console.log("Booking UID: ", bookingUID);
   console.log("Email ID: ", emailID);
   console.log("Reschedule Reason: ", rescheduleReason);
@@ -288,6 +289,7 @@ async function handleBookingCanceled(payload) {
 
 
 
+
   const ownerId = process.env.HUBSPOT_OWNER_ID;
   const body = "Booking has been canceled. No further actions are required.";
   
@@ -330,6 +332,14 @@ async function handleBookingCanceled(payload) {
   }
   const phoneNumber = phoneResult.data.phone
 
+  //create a note for the cancelling of booking
+  const noteResult = await handleNoteCreation(`Booking has been cancelled. BookingUID = ${bookingUID}`, phoneNumber)
+  if(noteResult.statusCode === 200){
+    console.log("note created for cancelleed booking"); 
+  }else{
+    console.error("Error creating note: ", noteResult.message);
+  }
+
   // Cancel any scheduled messages
   const cancelScheduledMessageResult = await handleCancelMessage(phoneNumber);
   if(cancelScheduledMessageResult.statusCode === 200){
@@ -352,6 +362,8 @@ async function handleBookingCanceled(payload) {
       twiml.message("An error occurred while updating your appointment status. Please try again later.");
       return;
   }
+
+
   console.log("Lead status updated successfully");
 
   console.log('Scheduled messages cancelled successfully.');

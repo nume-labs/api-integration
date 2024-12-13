@@ -321,7 +321,6 @@ async function checkAndScheduleNextReminderContactId(bookingUID, contactId) {
         }
 
         // Check if a message with the same body is already scheduled
-        //TODO--> CHANGE TO PHONE NUMBER VARIABLE
         const existingMessageResponse = await checkExistingScheduledMessage("+61483963666", body);
 
         if (existingMessageResponse.statusCode !== 200) {
