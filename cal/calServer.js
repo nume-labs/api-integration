@@ -109,10 +109,12 @@ async function handleBookingCreated(payload) {
   if (messageSchedulerResult.statusCode === 200) {
     console.log('Message scheduler triggered successfully.');
 
-    //get phoneNumber for id. 
+    //get phoneNumber for id.
+    let phoneNumber; 
     const phoneResult = await getPhoneNumberByContactId(contactId);
     if(phoneResult.statusCode === 200){
-      const noteResult = await handleNoteCreation("Reminder Scheduled", phoneResult.data.phone)
+      phoneNumber = phoneResult.data.phone;
+      const noteResult = await handleNoteCreation("Reminder Scheduled", phoneNumber)
       if(noteResult.statusCode === 200){
         console.log("note created for scheduled reminder"); 
       }else{
@@ -137,6 +139,13 @@ async function handleBookingCreated(payload) {
       return;
   }
   console.log("Lead status updated successfully");
+
+  const leadStatusNoteResult = await handleNoteCreation("Lead status updated to: APPOINTMENT_SCHEDULED", phoneNumber)
+      if(leadStatusNoteResult.statusCode === 200){
+        console.log("note created for lead status update"); 
+      }else{
+        console.error("Error creating note: ", leadStatusNoteResult.message);
+      }
 
   console.log("workflow complete")
 
@@ -266,6 +275,13 @@ async function handleBookingRescheduled(payload) {
   } else {
     console.warn("Error: ", messageSchedulerResult.message);
   }
+
+  const rescheduleNoteResult = await handleNoteCreation(`user rescheduled the booking. New UID: ${bookingUID}.`, phoneNumber);
+      if (rescheduleNoteResult.statusCode === 200) {
+        console.log("Note created for rescheduled reminder.");
+      } else {
+        console.error("Error creating note: ", rescheduleNoteResult.message);
+      }
 }
 
 // Function to handle BOOKING_CANCELED event
